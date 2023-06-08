@@ -258,6 +258,14 @@ double SimObject::calcBounceFactor(SimObject &other)
     return factor;
 }
 
+void SimObject::tick(double time) {
+    // tick children
+    for (SimObject *child : children)
+    {
+        child->tick(time);
+    }
+}
+
 void SimObject::draw()
 {
     glPushMatrix();
@@ -295,7 +303,7 @@ Vec3 Plane::bounce(const Vec3 &v)
 
 Wall::Wall(double x1, double z1, double x2, double z2) : SimObject()
 {
-    constexpr double HEIGHT = 3.5;
+    constexpr double HEIGHT = 2;
     corners.push_back(Vec3(x1, 0, z1));
     corners.push_back(Vec3(x1, HEIGHT, z1));
     corners.push_back(Vec3(x2, HEIGHT, z2));

@@ -4,6 +4,8 @@
 #include "simulation.hpp"
 #include "minigolf.hpp"
 
+#include <QMouseEvent>
+
 namespace Ui {
 class MainWindow;
 }
@@ -18,6 +20,13 @@ public:
     ~OGLWidget();
     static bool showAxis;
 
+    // Used to rotate object by mouse
+    void mousePressEvent(QMouseEvent *event);
+    void mouseMoveEvent(QMouseEvent *event);
+
+    // Used to rotate object by keys (requires focus for OpenGL widget)
+    void keyPressEvent(QKeyEvent *event);
+
 public slots:
     void setParamA( int newa );
     void setParamB( int newb );
@@ -26,12 +35,7 @@ public slots:
     void setUi( Ui::MainWindow *ui );
     void stopSim() { running = false; }
     void startSim();
-    void addSphere();
     void toggleAxis() { showAxis = !showAxis; }
-    void resetSpheres() { spheres.clear();}
-    void setWallCornerX(int i);
-    void setSphere1Radius(int i);
-    void setSphere2Radius(int i);
     void setGravity(int i) { gravDirection = i;}
 
 protected:
@@ -40,8 +44,7 @@ protected:
     void paintGL();
     void runSim();
     bool running = false;
-    std::vector<Sphere> spheres = std::vector<Sphere>();
-    Box box;
+    golf::Game game;
     void setSphereRadius(int idx, int value);
 
 protected:
@@ -52,6 +55,7 @@ protected:
     int lightDirection;
     double woh = 1.0;
     Ui::MainWindow *ui;
+    Vec3 lastMousePos;
 
 };
 

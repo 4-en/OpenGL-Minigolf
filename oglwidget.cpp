@@ -32,8 +32,9 @@ void OGLWidget::runSim()
         // parama+=0.1;
         dt = dtime * paramb;
         // apply gravity
-        for (Sphere &sphere : spheres)
+        for (golf::Player& player : game.getPlayers())
         {
+            Sphere& sphere = player.getBall();
             // calculate gravity for planet
             double mass = sphere.getMass();
             double force = G * planetMass * mass / pow((sphere.getRadius()) + planetRadius, 2);
@@ -47,16 +48,18 @@ void OGLWidget::runSim()
         }
 
         // apply velocity
-        for (Sphere &sphere : spheres)
+        for (golf::Player& player : game.getPlayers())
         {
+            Sphere& sphere = player.getBall();
             auto movement = sphere.getVelocity() * dt;
             sphere.move(movement);
         }
 
         // check collisions
         std::vector<Sphere *> bouncedSpheres;
-        for (Sphere &sphere : spheres)
+        for (golf::Player& player : game.getPlayers())
         {
+            Sphere& sphere = player.getBall();
             // check collision with floor
             if (floor.getDistance(sphere.getCenter()) < sphere.getRadius())
             {
@@ -73,22 +76,16 @@ void OGLWidget::runSim()
                 sphere.move(floor.normal * (sphere.getRadius() - dist));
             }
 
-            // check collision with box
-            Box &b = box;
-
-
-            for(size_t i = 0; i < b.getWalls().size(); i++) {
-
-                Wall& wall = b.getWalls()[i];
-                if (wall.collide(sphere)) break;
-            }
+            // check collision with golf objects
+            game.collide(sphere);
 
             // check if already bounced
             if (std::find(bouncedSpheres.begin(), bouncedSpheres.end(), &sphere) != bouncedSpheres.end())
                 continue;
 
-            for (Sphere &other : spheres)
+            for (golf::Player& player : game.getPlayers())
             {
+                Sphere& other = player.getBall();
 
                 // continue if same pointer
                 if (&sphere == &other)
@@ -104,16 +101,7 @@ void OGLWidget::runSim()
             }
         }
 
-        // remove spheres that are too far away
-        for (size_t i = 0; i < spheres.size(); i++)
-        {
-            Sphere &sphere = spheres[i];
-            if (sphere.getCenter().getDistance(Vec3(0, 0, 0)) > 100)
-            {
-                spheres.erase(spheres.begin() + i);
-                i--;
-            }
-        }
+
 
         update();
 
@@ -121,31 +109,11 @@ void OGLWidget::runSim()
         if (frame % fps == 0)
         {
             auto secondsFromFrames = frame / fps;
-            int ballCount = spheres.size();
-            std::cout << "\rFPS: " << fps << " Frame: " << frame << " Seconds: " << secondsFromFrames << " Spheres: " << ballCount <<"             " << std::flush;
+            std::cout << "\rFPS: " << fps << " Frame: " << frame << " Seconds: " << secondsFromFrames <<"             " << std::flush;
         }
         std::this_thread::sleep_until(lastTime + waitTime);
         frame++;
     }
-}
-
-// triggered by ui to add random sphere
-void OGLWidget::addSphere()
-{
-
-    //std::cout << "addSphere" << std::endl;
-
-    Sphere s(Vec3(0, randRange(0, 5), 0), randRange(0.5,1.2));
-    double zVel = randRange(-6, 6);
-    double xVel = randRange(-6, 6);
-    double yVel = randRange(-1, 6);
-
-    s.setVelocity(Vec3(xVel, yVel, zVel));
-
-    Vec3 color(randRange(0, 1), randRange(0, 1), randRange(0, 1));
-    s.setColor(color);
-
-    spheres.push_back(s);
 }
 
 
@@ -160,22 +128,6 @@ OGLWidget::OGLWidget(QWidget *parent)
     paramc = 1;
     lightDirection = 0;
 
-    Wall w(-3, -3, -4, 5);
-
-    // ramp
-    Vec3 vectors[4];
-    vectors[0] = Vec3(-2, -1, -3);
-    vectors[1] = Vec3(4, -1, -3);
-    vectors[2] = Vec3(4, 3.3, -7);
-    vectors[3] = Vec3(-2, 3.3, -7);
-
-    Wall w2(vectors[0], vectors[1], vectors[2], vectors[3]);
-
-    // wall corners with x1, z1, x2, z2, ...
-    std::vector<double> wallCorners = {-8,7,2,8,3,4,1,4,7,-7,-4,-6};
-    box = Box(wallCorners);
-    box.getWalls().push_back(w);
-    box.getWalls().push_back(w2);
 }
 
 void OGLWidget::startSim()
@@ -212,63 +164,6 @@ void OGLWidget::initializeGL()
     this->startSim();
 }
 
-// used to move corner of wall from ui
-void OGLWidget::setWallCornerX(int i) {
-    constexpr double minX = 1.0;
-    constexpr double maxX = 9.0;
-    double x = minX + (maxX - minX) * (double)i / 100.0;
-
-    // add 0.001 to avoid a point where surface = 0
-    x+=0.001;
-
-    constexpr size_t cornerIndex = 3;
-    // wall 0: corner 0 and 1, wall 1: corner 1 and 2, wall 2: corner 2 and 3, wall 3: corner 3 and 0
-    size_t outerCount = box.getOuterWallCount();
-    size_t wall1Index = (cornerIndex-1)%outerCount;
-    size_t wall2Index = cornerIndex%outerCount;
-
-    Wall& wall1 = box.getWalls()[wall1Index];
-    Wall& wall2 = box.getWalls()[wall2Index];
-
-    Vec3* corners[4];
-    corners[0] = &wall1.getCorners()[2];
-    corners[1] = &wall1.getCorners()[3];
-    corners[2] = &wall2.getCorners()[0];
-    corners[3] = &wall2.getCorners()[1];
-
-    for (size_t i = 0; i < 4; i++)
-    {
-        auto& corner = *corners[i];
-        corner.x = x;
-    }
-
-
-}
-
-void OGLWidget::setSphereRadius(int idx, int value) {
-    if(idx < 0 || static_cast<size_t>(idx) >= spheres.size()) return;
-    auto& sphere = spheres[idx];
-    double percent = (double)value / 50.0;
-    double oldMass = sphere.getMass();
-    sphere.setRadius(percent);
-
-    // apply old velocity to new radius
-    // E = 1/2 * m * v^2
-    // E stays the same, m changes -> v changes
-    // 1/2 m1 v1^2 = 1/2 m2 v2^2
-    // v2 = v1 * sqrt(m1/m2)
-    auto newMass = sphere.getMass();
-    auto newVelocity = sphere.getVelocity() * sqrt(oldMass / newMass);
-    sphere.setVelocity(newVelocity);
-}
-
-void OGLWidget::setSphere1Radius(int i) {
-    setSphereRadius(0, i);
-}
-
-void OGLWidget::setSphere2Radius(int i) {
-    setSphereRadius(1, i);
-}
 
 void OGLWidget::setParamA(int newa)
 {
@@ -338,12 +233,12 @@ void OGLWidget::paintGL()
         glEnd();
     }
 
-    box.draw();
+    game.draw();
 
-    for (Sphere &s : spheres)
+    for (golf::Player& player : game.getPlayers())
     {
         // s.setRadius(paramc);
-        s.draw();
+        player.getBall().draw();
     }
 
 
@@ -362,4 +257,42 @@ void OGLWidget::resizeGL(int w, int h)
     glLoadIdentity();
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();*/
+}
+
+void OGLWidget::mousePressEvent(QMouseEvent *event)
+{
+    // Upon mouse pressed, we store the current position...
+    lastMousePos.x = event->x();
+    lastMousePos.y = event->y();
+
+}
+
+void OGLWidget::mouseMoveEvent(QMouseEvent *event)
+{
+    // ... and while moving, we calculate the dragging deltas
+    // Left button: Rotating around x and y axis
+    int rx = (event->buttons() & Qt::LeftButton) ? lastMousePos.y - event->y() : 0;
+    int ry = lastMousePos.x - event->x();
+    // Right button: Rotating around z and y axis
+    int rz = (event->buttons() & Qt::RightButton) ? lastMousePos.y - event->y() : 0;
+
+    
+    lastMousePos.x = event->x();
+    lastMousePos.y = event->y();
+    std::cout << "X: " <<lastMousePos.x << ", Y: " << lastMousePos.y << std::endl;
+}
+
+void OGLWidget::keyPressEvent(QKeyEvent *event)
+{
+
+    switch(event->key())
+    {
+        // Up/Down: Rotating around x axis
+        case Qt::Key_Up:
+            break;
+
+        // All other will be ignored
+        default:
+            break;
+    }
 }

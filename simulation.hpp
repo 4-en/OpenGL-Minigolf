@@ -93,6 +93,7 @@ protected:
 public:
     SimObject() : center(0), rotation(), velocity(0), color(1,0,0), density(1) {}
     SimObject(Vec3 center, double density=1) : center(center), rotation(), velocity(0), color(1,0,0), density(density) {}
+    ~SimObject() { for (SimObject* child : children) delete child; }
     void setCenter(Vec3 center) { this->center = center; }
     void setDensity(double density) { this->density = density; }
     void setRotation(const QMatrix4x4& rotation) { this->rotation = rotation; }
@@ -110,6 +111,7 @@ public:
     std::vector<SimObject*>& getChildren() { return children; }
     virtual bool collide(Sphere& sphere) { return false; };
 
+    virtual void tick(double time);
     virtual void draw();
     virtual double getMass() { return static_cast<double>(LLONG_MAX); }
 };
