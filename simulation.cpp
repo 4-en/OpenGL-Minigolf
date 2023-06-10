@@ -1,11 +1,20 @@
 
 #include "simulation.hpp"
 #include "oglwidget.h"
+#include <iostream>
 
 void glNormalVec3(const Vec3 &v)
 {
     glNormal3f(v.x, v.y, v.z);
 }
+
+void glVertexVecVec3(const std::vector<Vec3>& v)
+{
+    for(const auto& vec : v) {
+        glVertex3f(vec.x, vec.y, vec.z);
+    }
+}
+
 
 // collision of sphere with wall
 bool Wall::collide(Sphere &sphere)
@@ -13,17 +22,19 @@ bool Wall::collide(Sphere &sphere)
 
     // cheap distance check first
     auto normal = getNormal();
-    const auto &point = corners[0];
-    const auto &center = sphere.getPosition();
+    auto worldCorners = getWorldCorners();
+    const auto &point = worldCorners[0];
+    const auto center = sphere.getWorldPosition();
     auto radius = sphere.getRadius();
     auto sphereVelocity = sphere.getVelocity();
     auto dist = abs(normal.dot(center - point));
+
     if (dist > radius)
         return false;
 
     // check for corner collision here
     for(int i = 0; i<4; i++) {
-        const auto& corner = corners[i];
+        const auto& corner = worldCorners[i];
         auto vec = center - corner;
         if(vec.length() < radius) {
             // collision confirmed, calculate reflection
@@ -42,8 +53,8 @@ bool Wall::collide(Sphere &sphere)
     // check if sphere collides with edge
 
     for(int i = 0; i < 4; i++) {
-        auto& corner1 = corners[i];
-        auto& corner2 = corners[(i+1)%4];
+        auto& corner1 = worldCorners[i];
+        auto& corner2 = worldCorners[(i+1)%4];
         auto edge = corner2 - corner1;
         auto edgeNormalized = edge.normalized();
 
@@ -61,7 +72,7 @@ bool Wall::collide(Sphere &sphere)
         //auto p = corner1 + t * edge;
         auto& p = closestPoint;
 
-        // check if collision point is between both corners by checking if distance |p-corner1| + |p-corner2| is equal to |corner1-corner2|
+        // check if collision point is between both worldCorners by checking if distance |p-corner1| + |p-corner2| is equal to |corner1-corner2|
         auto dist1 = p.getDistance(corner1);
         auto dist2 = p.getDistance(corner2);
         auto dist3 = corner1.getDistance(corner2);
@@ -84,7 +95,7 @@ bool Wall::collide(Sphere &sphere)
     // check if sphere collides with face
     // already in range of plane, check if collisionpoint is inside face
     // face normal: normal
-    // face point: corners[0]
+    // face point: worldCorners[0]
 
     // calculate closest point on plate to sphere center
 
@@ -92,7 +103,7 @@ bool Wall::collide(Sphere &sphere)
     auto newDist = normal.dot(center - point);
     auto p = center - newDist * normal;
 
-    // check if collision point is between all corners
+    // check if collision point is between all worldCorners
 
     // convert wall to 2d rectangle
     // wall[0] = 0/0
@@ -101,8 +112,8 @@ bool Wall::collide(Sphere &sphere)
     // wall[3] = 1/0
 
     // create vectors to span rectangle
-    auto v1 = corners[1] - corners[0];
-    auto v2 = corners[3] - corners[0];
+    auto v1 = worldCorners[1] - worldCorners[0];
+    auto v2 = worldCorners[3] - worldCorners[0];
 
     // normalize
     v1 = v1.normalized();
@@ -113,19 +124,19 @@ bool Wall::collide(Sphere &sphere)
 
 
     // convert a point to 2d:
-    // px = v1.dot(p - corners[0])
-    // py = v2.dot(p - corners[0])
-    // pz = n.dot(p - corners[0])
+    // px = v1.dot(p - worldCorners[0])
+    // py = v2.dot(p - worldCorners[0])
+    // pz = n.dot(p - worldCorners[0])
     // pz should be 0 and can be ignored, px and py form the 2d point
 
     // max values for height and width
-    auto topRight = corners[2] - corners[0];
+    auto topRight = worldCorners[2] - worldCorners[0];
     auto trX = v1.dot(topRight);
     auto trY = v2.dot(topRight);
     //auto trZ = n.dot(topRight);
 
     // vector from corner to point
-    auto pnew = p - corners[0];
+    auto pnew = p - worldCorners[0];
 
     // calculate px, py and pz
     auto px = v1.dot(pnew) / trX;
@@ -147,15 +158,15 @@ bool Wall::collide(Sphere &sphere)
     // barycentric approach
     // works, but currently not used
     // is also slower
-    // create two triangles from corners
+    // create two triangles from worldCorners
     /*
     bool isInside = false;
     for (int i = 0; i < 3; i += 2)
     {
         // calculate using barycentric coordinates
-        auto a = corners[i];
-        auto b = corners[i + 1];
-        auto c = corners[(i + 2) % 4];
+        auto a = worldCorners[i];
+        auto b = worldCorners[i + 1];
+        auto c = worldCorners[(i + 2) % 4];
 
         // vectors from a to b and a to c and a to p
         Vec3 v0 = c - a;
@@ -213,8 +224,8 @@ void Sphere::bounce(Sphere &other)
     auto mass2 = other.getMass();
     auto v1 = this->getVelocity();
     auto v2 = other.getVelocity();
-    auto p1 = this->getPosition();
-    auto p2 = other.getPosition();
+    auto p1 = this->getWorldPosition();
+    auto p2 = other.getWorldPosition();
 
     // calculate new velocities
     // collision point based on radius
@@ -231,7 +242,7 @@ void Sphere::bounce(Sphere &other)
 
     // move spheres out of each other
     auto dist = (this->getRadius() + other.getRadius()) * 1.001;
-    auto vec = this->getPosition() - other.getPosition();
+    auto vec = this->getWorldPosition() - other.getWorldPosition();
     auto moveDirection = vec.normalized();
     auto move = moveDirection * (dist - vec.length());
     this->move(move);
@@ -303,6 +314,14 @@ void SimObject::draw()
     glPopMatrix();
 }
 
+void Triangle::draw() {
+    return;
+}
+
+bool Triangle::collide(Sphere& sphere) {
+    return false;
+}
+
 Plane::Plane(Vec3 normal, Vec3 point) : normal(normal), point(point)
 {
     this->normal = this->normal.normalized();
@@ -341,11 +360,11 @@ void Wall::draw()
     glColor3f(color.x, color.y, color.z);
     glBegin(GL_QUADS);
     glNormalVec3(getNormal());
-    for (int i = 0; i < 4; i++)
-    {
-        const auto &corner = corners[i];
-        glVertexNPoints(corner);
-    }
+
+    // dont need worldCorners, because relative position is already applied in parent matrix
+    auto corners = getCorners();
+    glVertexVecVec3(corners);
+
     glEnd();
     glPopMatrix();
 }
@@ -356,6 +375,17 @@ Wall::Wall(const Vec3 &corner1, const Vec3 &corner2, const Vec3 &corner3, const 
     corners.push_back(corner2);
     corners.push_back(corner3);
     corners.push_back(corner4);
+}
+
+std::vector<Vec3> Wall::getWorldCorners()
+{
+    auto wPos = this->getWorldPosition();
+    return {
+        corners[0] + wPos,
+        corners[1] + wPos,
+        corners[2] + wPos,
+        corners[3] + wPos
+        };
 }
 
 void Sphere::draw()
@@ -442,7 +472,7 @@ void Sphere::move(Vec3 v)
     Vec3& floor = this->getFloorNormal();
     if(floor.lengthSquared() < 0.01) {
         // no floor
-        position += v;
+        setPosition(this->getPosition()+v);
         return;
     }
 
@@ -451,7 +481,7 @@ void Sphere::move(Vec3 v)
     auto cross = vnorm.cross(floor);
     if(cross.lengthSquared() < 0.00001) {
         // no rotation
-        position += v;
+        setPosition(this->getPosition()+v);
         return;
     }
     auto rot = cross.normalized();
@@ -463,12 +493,12 @@ void Sphere::move(Vec3 v)
     rotMatrix.rotate(angle, rot.x, rot.y, rot.z);
     rotMatrix *= rotation;
     rotation = rotMatrix;
-    position += v;
+    setPosition(this->getPosition()+v);
 }
 
 void Sphere::moveTo(Vec3 v)
 {
-    auto diff = v - position;
+    auto diff = v - getWorldPosition();
     move(diff);
 }
 

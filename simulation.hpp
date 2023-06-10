@@ -61,6 +61,7 @@ void glVertexNPoints(const Vec3 &...v)
     (glVertex3f(v.x, v.y, v.z), ...);
 }
 
+void glVertexVecVec3(const std::vector<Vec3>& v);
 
 
 
@@ -123,6 +124,20 @@ public:
 // Predefine Sphere class to use in Wall class
 class Sphere;
 
+// a finite plane defined by three points
+class Triangle : public SimObject {
+protected:
+    Vec3 p1, p2, p3;
+
+public:
+    Triangle(const Vec3& p1, const Vec3& p2, const Vec3& p3);
+    Triangle() : Triangle(Vec3(-1,0,-1), Vec3(1,0,-1), Vec3(0,0,1)) {}
+    void draw();
+    bool collide(Sphere& sphere);
+    Vec3 getNormal() { return p1.getNormal(p2, p3); }
+    std::vector<Vec3> getCorners() { return {p1, p2, p3}; }
+};
+
 // A wall is defined by four corners
 // acts like a finite plane
 class Wall : public SimObject
@@ -140,6 +155,7 @@ public:
     bool collide(Sphere& sphere);
     Vec3 getNormal() { return corners[0].getNormal(corners[1], corners[2]); }
     std::vector<Vec3>& getCorners() { return corners; }
+    std::vector<Vec3> getWorldCorners();
 };
 
 // A sphere is defined by a center and a radius

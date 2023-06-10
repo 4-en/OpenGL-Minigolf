@@ -46,6 +46,7 @@ namespace golf {
             addChild(new Wall(wall));
         }
 
+
     }
 
     Game::Game() {
@@ -53,6 +54,10 @@ namespace golf {
         Player player("Player 1");
         // add player to game
         players.push_back(player);
+
+        Player player2("Player 2");
+        player2.getBall().setPosition(Vec3(2, 1, 4));
+        players.push_back(player2);
 
         // create course
         course = new CourseA8(*this);
@@ -71,5 +76,7 @@ namespace golf {
 
         // draw controller
         controller.draw();
+
+        // draw ui
     }
 }
