@@ -14,7 +14,7 @@ bool Wall::collide(Sphere &sphere)
     // cheap distance check first
     auto normal = getNormal();
     const auto &point = corners[0];
-    const auto &center = sphere.getCenter();
+    const auto &center = sphere.getPosition();
     auto radius = sphere.getRadius();
     auto sphereVelocity = sphere.getVelocity();
     auto dist = abs(normal.dot(center - point));
@@ -213,8 +213,8 @@ void Sphere::bounce(Sphere &other)
     auto mass2 = other.getMass();
     auto v1 = this->getVelocity();
     auto v2 = other.getVelocity();
-    auto p1 = this->getCenter();
-    auto p2 = other.getCenter();
+    auto p1 = this->getPosition();
+    auto p2 = other.getPosition();
 
     // calculate new velocities
     // collision point based on radius
@@ -231,7 +231,7 @@ void Sphere::bounce(Sphere &other)
 
     // move spheres out of each other
     auto dist = (this->getRadius() + other.getRadius()) * 1.001;
-    auto vec = this->getCenter() - other.getCenter();
+    auto vec = this->getPosition() - other.getPosition();
     auto moveDirection = vec.normalized();
     auto move = moveDirection * (dist - vec.length());
     this->move(move);
@@ -266,10 +266,32 @@ void SimObject::tick(double time) {
     }
 }
 
+void SimObject::setPosition(Vec3 position) {
+    this->position = position;
+    auto myPos = this->getWorldPosition();
+    for(SimObject *child : children) {
+        child->setWorldPosition(myPos);
+    }
+}
+
+void SimObject::setWorldPosition(Vec3 position) {
+    this->worldPosition = position;
+    auto myPos = this->getWorldPosition();
+    for(SimObject *child : children) {
+        child->setWorldPosition(myPos);
+    }
+}
+
+void SimObject::addChild(SimObject* child) {
+    children.push_back(child);
+    child->parent = this;
+    child->setWorldPosition(this->getWorldPosition());
+}
+
 void SimObject::draw()
 {
     glPushMatrix();
-    glTranslatef(center.x, center.y, center.z);
+    glTranslatef(position.x, position.y, position.z);
     glMultMatrixf(rotation.data());
 
     // draw children
@@ -341,7 +363,7 @@ void Sphere::draw()
     glPushMatrix();
 
     // position
-    glTranslatef(center.x, center.y, center.z);
+    glTranslatef(position.x, position.y, position.z);
 
     // draw axis if enabled
     if(OGLWidget::showAxis) {
@@ -420,7 +442,7 @@ void Sphere::move(Vec3 v)
     Vec3& floor = this->getFloorNormal();
     if(floor.lengthSquared() < 0.01) {
         // no floor
-        center += v;
+        position += v;
         return;
     }
 
@@ -429,7 +451,7 @@ void Sphere::move(Vec3 v)
     auto cross = vnorm.cross(floor);
     if(cross.lengthSquared() < 0.00001) {
         // no rotation
-        center += v;
+        position += v;
         return;
     }
     auto rot = cross.normalized();
@@ -441,12 +463,12 @@ void Sphere::move(Vec3 v)
     rotMatrix.rotate(angle, rot.x, rot.y, rot.z);
     rotMatrix *= rotation;
     rotation = rotMatrix;
-    center += v;
+    position += v;
 }
 
 void Sphere::moveTo(Vec3 v)
 {
-    auto diff = v - center;
+    auto diff = v - position;
     move(diff);
 }
 
@@ -470,7 +492,7 @@ Box::Box(const std::vector<double>& xnzn) : SimObject()
 void Box::draw()
 {
     glPushMatrix();
-    glTranslatef(center.x, center.y, center.z);
+    glTranslatef(position.x, position.y, position.z);
 
     // draw floor
 

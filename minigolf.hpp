@@ -18,7 +18,7 @@ private:
     Sphere ball;
 
 public:
-    Player(std::string name) : name(name), ball(Vec3(0), 0.3) {}
+    Player(const std::string& name);
 
     std::string getName() { return name; }
     unsigned int getScore() { return score; }
@@ -42,6 +42,7 @@ public:
     const Vec3& getHolePosition() { return holePosition; }
     const double getHoleRadius() { return holeRadius; }
     const Vec3& getStartPosition() { return startPosition; }
+    bool collide(Sphere& sphere);
 
 };
 
@@ -80,6 +81,7 @@ public:
     Controller& getController() { return controller; }
     Course& getCourse() { return *course; }
     void draw();
+    bool collide(Sphere& sphere);
 
 
 };

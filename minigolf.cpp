@@ -3,6 +3,12 @@
 
 namespace golf {
 
+    Player::Player(const std::string& name) : name(name), ball(Vec3(0), 0.4) {
+        // give ball momentum
+        ball.setVelocity(Vec3(2, 0, 1));
+
+    }
+
     void Course::draw() {
         SimObject::draw();
 
@@ -13,6 +19,16 @@ namespace golf {
         for (Player& player : game.getPlayers()) {
             // draw ball
             player.getBall().draw();
+        }
+    }
+
+    bool Course::collide(Sphere& sphere) {
+        
+        // collide with obstacles
+        for (SimObject* child : children) {
+            if (child->collide(sphere)) {
+                return true;
+            }
         }
     }
 
@@ -42,6 +58,10 @@ namespace golf {
         course = new CourseA8(*this);
 
 
+    }
+
+    bool Game::collide(Sphere& sphere) {
+        return this->course->collide(sphere);
     }
 
     void Game::draw() {

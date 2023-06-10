@@ -61,7 +61,7 @@ void OGLWidget::runSim()
         {
             Sphere& sphere = player.getBall();
             // check collision with floor
-            if (floor.getDistance(sphere.getCenter()) < sphere.getRadius())
+            if (floor.getDistance(sphere.getPosition()) < sphere.getRadius())
             {
                 sphere.setFloorNormal(floor.normal);
                 // collision
@@ -72,7 +72,7 @@ void OGLWidget::runSim()
                 reflection.y *= floorBounce;
                 sphere.setVelocity(reflection);
                 // move sphere out of floor
-                double dist = floor.getDistance(sphere.getCenter());
+                double dist = floor.getDistance(sphere.getPosition());
                 sphere.move(floor.normal * (sphere.getRadius() - dist));
             }
 
@@ -90,7 +90,7 @@ void OGLWidget::runSim()
                 // continue if same pointer
                 if (&sphere == &other)
                     continue;
-                if (sphere.getCenter().getDistance(other.getCenter()) < sphere.getRadius() + other.getRadius())
+                if (sphere.getPosition().getDistance(other.getPosition()) < sphere.getRadius() + other.getRadius())
                 {
                     sphere.bounce(other);
 

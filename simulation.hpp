@@ -83,7 +83,9 @@ class Sphere;
 class SimObject {
 protected:
     double bounceFactor = 0.8;
-    Vec3 center;
+    Vec3 position;
+    SimObject* parent = nullptr;
+    Vec3 worldPosition = Vec3(0);
     QMatrix4x4 rotation;
     Vec3 velocity;
     Vec3 color;
@@ -91,15 +93,17 @@ protected:
     std::vector<SimObject*> children;
 
 public:
-    SimObject() : center(0), rotation(), velocity(0), color(1,0,0), density(1) {}
-    SimObject(Vec3 center, double density=1) : center(center), rotation(), velocity(0), color(1,0,0), density(density) {}
-    ~SimObject() { for (SimObject* child : children) delete child; }
-    void setCenter(Vec3 center) { this->center = center; }
+    SimObject() : position(0), rotation(), velocity(0), color(1,0,0), density(1) {}
+    SimObject(Vec3 center, double density=1) : position(center), rotation(), velocity(0), color(1,0,0), density(density) {}
+    virtual ~SimObject() { for (SimObject* child : children) delete child; }
+    void setPosition(Vec3 position);
     void setDensity(double density) { this->density = density; }
     void setRotation(const QMatrix4x4& rotation) { this->rotation = rotation; }
     void setVelocity(Vec3 velocity) { this->velocity = velocity; }
     void setColor(Vec3 color) { this->color = color; }
-    Vec3& getCenter() { return center; }
+    Vec3& getPosition() { return position; }
+    Vec3 getWorldPosition() { return worldPosition + position; }
+    void setWorldPosition(Vec3 worldPosition);
     double getDensity() { return density; }
     QMatrix4x4& getRotation() { return rotation; }
     Vec3& getVelocity() { return velocity; }
@@ -107,7 +111,7 @@ public:
     double getBounceFactor() { return bounceFactor; }
     void setBounceFactor(double bounceFactor) { this->bounceFactor = bounceFactor; }
     double calcBounceFactor(SimObject& other);
-    void addChild(SimObject* child) { children.push_back(child); }
+    void addChild(SimObject* child);
     std::vector<SimObject*>& getChildren() { return children; }
     virtual bool collide(Sphere& sphere) { return false; };
 
