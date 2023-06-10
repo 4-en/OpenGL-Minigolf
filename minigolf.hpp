@@ -9,13 +9,26 @@
 
 namespace golf {
 
+class GroundTile : public Triangle {
+public:
+    GroundTile(const Vec3& p1, const Vec3& p2, const Vec3& p3) : Triangle(p1, p2, p3) {
+        this->frictionCoefficient = 0.03;
+        this->faceCollisionOnly = true;
+        this->bounceFactor = 0.8;
+    }
+};
+
+class Golfball : public Sphere {
+public:
+    Golfball() : Sphere(Vec3(0), 0.4) { this->bounceFactor = 1.0;}
+};
 
 class Player {
 
 private:
     std::string name;
     unsigned int score = 0;
-    Sphere ball;
+    Golfball ball;
 
 public:
     Player(const std::string& name);
@@ -23,8 +36,8 @@ public:
     std::string getName() { return name; }
     unsigned int getScore() { return score; }
     void setScore(unsigned int score) { this->score = score; }
-    Sphere& getBall() { return ball; }
-    void setBall(Sphere ball) { this->ball = ball; }
+    Golfball& getBall() { return ball; }
+    void setBall(Golfball ball) { this->ball = ball; }
 
 };
 class Game;

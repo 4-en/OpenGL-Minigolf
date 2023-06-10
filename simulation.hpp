@@ -29,6 +29,7 @@ public:
     Vec3(double x, double y, double z) : x(x), y(y), z(z) {}
     Vec3() : x(0), y(0), z(0) {}
     Vec3(double xyz) : x(xyz), y(xyz), z(xyz) {}
+    Vec3(double x, double z) : x(x), y(0), z(z) {}
     Vec3 operator+(const Vec3& v) const { return Vec3(x + v.x, y + v.y, z + v.z); }
     void operator+=(const Vec3& v) { x += v.x; y += v.y; z += v.z; }
     Vec3 operator-(const Vec3& v) const { return Vec3(x - v.x, y - v.y, z - v.z); }
@@ -83,7 +84,8 @@ class Sphere;
 // A simulation object is an abstract class used to represent objects in the simulation
 class SimObject {
 protected:
-    double bounceFactor = 0.8;
+    double bounceFactor = 0.99;
+    double frictionCoefficient = 0;
     Vec3 position;
     SimObject* parent = nullptr;
     Vec3 worldPosition = Vec3(0);
@@ -111,10 +113,11 @@ public:
     Vec3& getColor() { return color; }
     double getBounceFactor() { return bounceFactor; }
     void setBounceFactor(double bounceFactor) { this->bounceFactor = bounceFactor; }
-    double calcBounceFactor(SimObject& other);
+    double calcBounceFactor(const SimObject& other);
     void addChild(SimObject* child);
     std::vector<SimObject*>& getChildren() { return children; }
-    virtual bool collide(Sphere& sphere) { return false; };
+    virtual bool collide(Sphere& sphere) { return false; }
+    void applyCollisionVelocity(const Vec3& newVelocity, const Vec3& otherNormal, const SimObject& otherObject);
 
     virtual void tick(double time);
     virtual void draw();
@@ -128,6 +131,7 @@ class Sphere;
 class Triangle : public SimObject {
 protected:
     Vec3 p1, p2, p3;
+    bool faceCollisionOnly = false;
 
 public:
     Triangle(const Vec3& p1, const Vec3& p2, const Vec3& p3);

@@ -32,6 +32,8 @@ bool Wall::collide(Sphere &sphere)
     if (dist > radius)
         return false;
 
+    //double bounceFactor = calcBounceFactor(*this);
+
     // check for corner collision here
     for (int i = 0; i < 4; i++)
     {
@@ -215,6 +217,46 @@ bool Wall::collide(Sphere &sphere)
     return true;
 }
 
+// applies new velocity to object with consideration of bounce or friction
+void SimObject::applyCollisionVelocity(const Vec3& newVelocity, const Vec3& otherNormal, const SimObject& other) {
+
+    // check if collision is a bounce or roll
+    double dot = newVelocity.normalized().dot(otherNormal);
+    if (true || newVelocity.lengthSquared()<0.1) {
+        std::cout << "Rolling" << std::endl;
+        // roll
+        // Ff = mu * N
+        // force is opposite to velocity
+        // apply friction
+        double ff = other.frictionCoefficient * this->getMass() * 9.81;
+        constexpr double dt = 1.0 / 60.0;
+        double acc = ff / this->getMass();
+        
+        double fVel = acc * dt;
+        if (fVel > newVelocity.length()) {
+            std::cout << "Setting vel to 0" << std::endl;
+            this->velocity = Vec3(0, 0, 0);
+            return;
+        }
+
+        // calculate velocity direction without bounce (orthogonal to normal)
+        auto velDir = (newVelocity.normalized() - otherNormal * dot);
+
+        // apply friction
+        // force is opposite to velocity
+        this->velocity = velDir * (newVelocity.length()-fVel);
+    }
+    else {
+        std::cout << dot << std::endl;
+        // bounce
+        // test: only reduce velocity in normal dir
+        //this->velocity = newVelocity - (1 -  calcBounceFactor(other)) * dot * otherNormal * newVelocity.length();
+        this->velocity = newVelocity;
+        this->velocity.y *= calcBounceFactor(other);
+    }
+
+}
+
 // collision of sphere with sphere
 void Sphere::bounce(Sphere &other)
 {
@@ -235,8 +277,10 @@ void Sphere::bounce(Sphere &other)
     auto v1f = v1 - 2 * mass2 / (mass1 + mass2) * (v1 - v2).dot(p1 - coll) / pow((p1 - coll).length(), 2) * (p1 - coll);
     auto v2f = v2 - 2 * mass1 / (mass1 + mass2) * (v2 - v1).dot(p2 - coll) / pow((p2 - coll).length(), 2) * (p2 - coll);
 
-    this->setVelocity(v1f);
-    other.setVelocity(v2f);
+    double bounce = calcBounceFactor(other);
+
+    this->setVelocity(v1f*bounce);
+    other.setVelocity(v2f*bounce);
 
     // move spheres out of each other
     auto dist = (this->getRadius() + other.getRadius()) * 1.001;
@@ -259,10 +303,9 @@ Vec3 Vec3::getNormal(const Vec3 &other1, const Vec3 &other2)
     return v1.cross(v2).normalized();
 }
 
-double SimObject::calcBounceFactor(SimObject &other)
+double SimObject::calcBounceFactor(const SimObject &other)
 {
-    // always returns 1 for more fun
-    return 1.0;
+
     double factor = (other.bounceFactor * this->bounceFactor);
     return factor;
 }
@@ -318,12 +361,20 @@ void SimObject::draw()
     glPopMatrix();
 }
 
+Triangle::Triangle(const Vec3 &p1, const Vec3 &p2, const Vec3 &p3)
+{
+    this->p1 = p1;
+    this->p2 = p2;
+    this->p3 = p3;
+}
+
 void Triangle::draw()
 {
     glPushMatrix();
     glBegin(GL_TRIANGLES);
     glTranslatef(position.x, position.y, position.z);
     glColor3f(1.0f, 0.0f, 0.0f);
+    glNormalVec3(getNormal());
     glVertex3f(p1.x, p1.y, p1.z);
     glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(p2.x, p2.y, p2.z);
@@ -349,68 +400,71 @@ bool Triangle::collide(Sphere &sphere)
     if (dist > radius)
         return false;
 
-    // check for corner collision here
-    for (int i = 0; i < 3; i++)
-    {
-        const auto &corner = worldCorners[i];
-        auto vec = center - corner;
-        if (vec.length() < radius)
-        {
-            // collision confirmed, calculate reflection
-            // calculate reflection vector
-            auto reflection = sphereVelocity - 2 * sphereVelocity.dot(normal) / pow(normal.length(), 2) * normal;
-            sphere.setVelocity(reflection);
+    double bounceFactor = sphere.calcBounceFactor(*this);
 
-            // move sphere out of corner
-            Vec3 move = reflection.normalized() * (radius - dist + 0.001);
-            sphere.move(move);
-            return true;
+    // check for corner collision here
+    if (!faceCollisionOnly)
+        for (int i = 0; i < 3; i++)
+        {
+            const auto &corner = worldCorners[i];
+            auto vec = center - corner;
+            if (vec.length() < radius)
+            {
+                // collision confirmed, calculate reflection
+                // calculate reflection vector
+                auto reflection = sphereVelocity - 2 * sphereVelocity.dot(normal) / pow(normal.length(), 2) * normal;
+                sphere.setVelocity(reflection*bounceFactor);
+
+                // move sphere out of corner
+                Vec3 move = reflection.normalized() * (radius - dist + 0.001);
+                sphere.move(move);
+                return true;
+            }
         }
-    }
 
     // check if sphere collides with edge
+    if (!faceCollisionOnly)
+        for (int i = 0; i < 3; i++)
+        {
+            auto &corner1 = worldCorners[i];
+            auto &corner2 = worldCorners[(i + 1) % 3];
+            auto edge = corner2 - corner1;
+            auto edgeNormalized = edge.normalized();
 
-    for (int i = 0; i < 3; i++)
-    {
-        auto &corner1 = worldCorners[i];
-        auto &corner2 = worldCorners[(i + 1) % 3];
-        auto edge = corner2 - corner1;
-        auto edgeNormalized = edge.normalized();
+            auto ca = center - corner1;
 
-        auto ca = center - corner1;
+            // calculate distance to edge
+            // distance from corner1 to closest point on edge
+            auto edgedist = edgeNormalized.dot(ca);
+            auto closestPoint = corner1 + edgedist * edgeNormalized;
+            double cpdist = closestPoint.getDistance(center);
+            if (cpdist > radius)
+                continue;
 
-        // calculate distance to edge
-        // distance from corner1 to closest point on edge
-        auto edgedist = edgeNormalized.dot(ca);
-        auto closestPoint = corner1 + edgedist * edgeNormalized;
-        double cpdist = closestPoint.getDistance(center);
-        if (cpdist > radius)
-            continue;
+            // calculate closest point on edge to sphere center
+            // double t = ca.dot(edge) / edge.dot(edge);
+            // auto p = corner1 + t * edge;
+            auto &p = closestPoint;
 
-        // calculate closest point on edge to sphere center
-        // double t = ca.dot(edge) / edge.dot(edge);
-        // auto p = corner1 + t * edge;
-        auto &p = closestPoint;
+            // check if collision point is between both worldCorners by checking if distance |p-corner1| + |p-corner2| is equal to |corner1-corner2|
+            auto dist1 = p.getDistance(corner1);
+            auto dist2 = p.getDistance(corner2);
+            auto dist3 = corner1.getDistance(corner2);
+            constexpr double tolerance = 0.01;
+            if (dist1 + dist2 > dist3 + tolerance)
+                continue;
 
-        // check if collision point is between both worldCorners by checking if distance |p-corner1| + |p-corner2| is equal to |corner1-corner2|
-        auto dist1 = p.getDistance(corner1);
-        auto dist2 = p.getDistance(corner2);
-        auto dist3 = corner1.getDistance(corner2);
-        constexpr double tolerance = 0.01;
-        if (dist1 + dist2 > dist3 + tolerance)
-            continue;
+            // collision confirmed, calculate reflection
+            // calculate reflection vector
+            auto collToCenter = center - p;
+            collToCenter = collToCenter.normalized();
+            auto reflection = sphereVelocity - 2 * sphereVelocity.dot(collToCenter) * collToCenter;
+            sphere.setVelocity(reflection*bounceFactor);
 
-        // collision confirmed, calculate reflection
-        // calculate reflection vector
-        auto collToCenter = center - p;
-        collToCenter = collToCenter.normalized();
-        auto reflection = sphereVelocity - 2 * sphereVelocity.dot(collToCenter) * collToCenter;
-        sphere.setVelocity(reflection);
-
-        // move sphere out of wall
-        Vec3 move = reflection.normalized() * (radius - abs(cpdist) + 0.001) * (1 / collToCenter.dot(reflection.normalized()));
-        sphere.move(move);
-    }
+            // move sphere out of wall
+            Vec3 move = reflection.normalized() * (radius - abs(cpdist) + 0.001) * (1 / collToCenter.dot(reflection.normalized()));
+            sphere.move(move);
+        }
 
     // check if sphere collides with face
     // already in range of plane, check if collisionpoint is inside face
@@ -428,9 +482,9 @@ bool Triangle::collide(Sphere &sphere)
     // barycentric approach
 
     // calculate using barycentric coordinates
-    auto& a = worldCorners[0];
-    auto& b = worldCorners[1];
-    auto& c = worldCorners[2];
+    auto &a = worldCorners[0];
+    auto &b = worldCorners[1];
+    auto &c = worldCorners[2];
 
     // vectors from a to b and a to c and a to p
     Vec3 v0 = c - a;
@@ -465,7 +519,7 @@ bool Triangle::collide(Sphere &sphere)
     auto collToCenter = center - p;
     collToCenter = collToCenter.normalized();
     auto reflection = sphereVelocity - 2 * sphereVelocity.dot(collToCenter) / pow(collToCenter.length(), 2) * collToCenter;
-    sphere.setVelocity(reflection);
+    sphere.applyCollisionVelocity(reflection, normal, *this);
     // move sphere out of wall
     Vec3 move = reflection.normalized() * (radius - dist + 0.001) * (1 / collToCenter.dot(reflection.normalized()));
 
@@ -657,7 +711,7 @@ void Sphere::move(Vec3 v)
 
     // calculate angle
     // idk why -
-    auto angle = -360.0 * v.length() / (2.0 * PI * radius);
+    auto angle = -360.0 * v.length() * (1-v.dot(getFloorNormal())) / (2.0 * PI * radius);
     QMatrix4x4 rotMatrix;
     rotMatrix.rotate(angle, rot.x, rot.y, rot.z);
     rotMatrix *= rotation;

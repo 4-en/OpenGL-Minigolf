@@ -22,8 +22,6 @@ void OGLWidget::runSim()
     auto lastTime = std::chrono::high_resolution_clock::now();
     unsigned long long frame = 0;
 
-    Plane floor(Vec3(0, 1.1, 0), Vec3(0, 0.1, 0));
-    constexpr double floorBounce = 0.8;
 
     running = true;
     while (running)
@@ -60,21 +58,6 @@ void OGLWidget::runSim()
         for (golf::Player& player : game.getPlayers())
         {
             Sphere& sphere = player.getBall();
-            // check collision with floor
-            if (floor.getDistance(sphere.getPosition()) < sphere.getRadius())
-            {
-                sphere.setFloorNormal(floor.normal);
-                // collision
-                // calculate reflection vector
-                Vec3 reflection = floor.bounce(sphere.getVelocity());
-                // reduce velocity, otherwise it will bounce forever
-                // only reduce velocity in direction of floor to keep movement
-                reflection.y *= floorBounce;
-                sphere.setVelocity(reflection);
-                // move sphere out of floor
-                double dist = floor.getDistance(sphere.getPosition());
-                sphere.move(floor.normal * (sphere.getRadius() - dist));
-            }
 
             // check collision with golf objects
             game.collide(sphere);
