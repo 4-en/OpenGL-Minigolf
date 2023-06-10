@@ -136,6 +136,7 @@ public:
     bool collide(Sphere& sphere);
     Vec3 getNormal() { return p1.getNormal(p2, p3); }
     std::vector<Vec3> getCorners() { return {p1, p2, p3}; }
+    std::vector<Vec3> getWorldCorners();
 };
 
 // A wall is defined by four corners
