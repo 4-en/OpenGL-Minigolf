@@ -40,7 +40,7 @@ public:
     Course(Game& game) : game(game) {}
     void draw();
     const Vec3& getHolePosition() { return holePosition; }
-    const double getHoleRadius() { return holeRadius; }
+    double getHoleRadius() { return holeRadius; }
     const Vec3& getStartPosition() { return startPosition; }
     bool collide(Sphere& sphere);
 
