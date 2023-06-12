@@ -247,8 +247,7 @@ void OGLWidget::paintGL()
     float sheight = 537;
     float xval = startx/swidth*2;
     float yval = (2 - (starty/sheight*2));
-    float endxval=lastMousePos.x/swidth*2;
-    float endyval=(2- (lastMousePos.y/sheight*2));
+
 //std::cout << "xval: "<<startx << std::endl;
   //  std::cout << "yval: "<<starty << std::endl;
 //std::cout << startx<<" / " << swidth <<  " = "<<startx/swidth <<std::endl;
@@ -256,22 +255,16 @@ void OGLWidget::paintGL()
 //std::cout << " newvalues " << endxval << endyval<<std::endl;
     glPushMatrix();
         glTranslatef(-1.0,-1.0,0);
-
         glTranslatef(xval,yval,0);
-
-    glBegin(GL_TRIANGLE_STRIP);
-        glColor3f(1, 1, 0.0);
-        glVertex3f(0,0,0);
-        glVertex3f(0.025,0.025,0);
-        glVertex3f(0 ,0.025,0);
-        glVertex3f(0.025,0,0);
-        glVertex3f(-2*(0.0125+startx-lastMousePos.x)/swidth,2*(0.0125+starty-lastMousePos.y)/sheight,0);
-       // glVertex3f(-distance/(3*swidth)*(0.0125+startx-lastMousePos.x),distance/(3*sheight)*(0.0125+starty-lastMousePos.y),0);
-
-    glEnd();
+        glBegin(GL_TRIANGLE_STRIP);
+            glColor3f(1, 1, 0.0);
+            glVertex3f(0,0,0);
+            glVertex3f(0.025,0.025,0);
+            glVertex3f(0 ,0.025,0);
+            glVertex3f(0.025,0,0);
+            glVertex3f(-2*(0.0125+startx-lastMousePos.x)/swidth,2*(0.0125+starty-lastMousePos.y)/sheight,0);
+        glEnd();
        glTranslatef(-xval,-yval,0);
-
-
         glTranslatef(1.025,1.1025,0);
     glPopMatrix();
 }
