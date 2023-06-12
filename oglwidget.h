@@ -56,6 +56,9 @@ protected:
     double woh = 1.0;
     Ui::MainWindow *ui;
     Vec3 lastMousePos;
+    float startx;
+    float starty;
+    float distance;
 
 };
 

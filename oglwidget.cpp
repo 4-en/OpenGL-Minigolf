@@ -179,6 +179,10 @@ void OGLWidget::paintGL()
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
+
+
+
     glPushMatrix();
 
     // rotate with gravity
@@ -197,6 +201,7 @@ void OGLWidget::paintGL()
     glLightfv(GL_LIGHT1, GL_POSITION, light_position);
     glEnable(GL_LIGHT1);
     glPopMatrix();
+
 
     if(OGLWidget::showAxis) {
         
@@ -226,6 +231,49 @@ void OGLWidget::paintGL()
 
 
     glPopMatrix();
+
+
+
+
+    //draw arrow
+    //    glBegin(GL_QUADS);
+    //    glVertex2d(startx,starty);
+    //    glVertex2d(startx +100,starty);
+    //    glVertex2d(startx+100,starty+100);
+    //    glVertex2d(startx,starty+100);
+    //    glEnd();
+
+    float swidth = 724;
+    float sheight = 537;
+    float xval = startx/swidth*2;
+    float yval = (2 - (starty/sheight*2));
+    float endxval=lastMousePos.x/swidth*2;
+    float endyval=(2- (lastMousePos.y/sheight*2));
+//std::cout << "xval: "<<startx << std::endl;
+  //  std::cout << "yval: "<<starty << std::endl;
+//std::cout << startx<<" / " << swidth <<  " = "<<startx/swidth <<std::endl;
+//std::cout << " ytransvalue " << yval <<std::endl;
+//std::cout << " newvalues " << endxval << endyval<<std::endl;
+    glPushMatrix();
+        glTranslatef(-1.0,-1.0,0);
+
+        glTranslatef(xval,yval,0);
+
+    glBegin(GL_TRIANGLE_STRIP);
+        glColor3f(1, 1, 0.0);
+        glVertex3f(0,0,0);
+        glVertex3f(0.025,0.025,0);
+        glVertex3f(0 ,0.025,0);
+        glVertex3f(0.025,0,0);
+        glVertex3f(-2*(0.0125+startx-lastMousePos.x)/swidth,2*(0.0125+starty-lastMousePos.y)/sheight,0);
+       // glVertex3f(-distance/(3*swidth)*(0.0125+startx-lastMousePos.x),distance/(3*sheight)*(0.0125+starty-lastMousePos.y),0);
+
+    glEnd();
+       glTranslatef(-xval,-yval,0);
+
+
+        glTranslatef(1.025,1.1025,0);
+    glPopMatrix();
 }
 
 bool OGLWidget::showAxis = false;
@@ -247,22 +295,31 @@ void OGLWidget::mousePressEvent(QMouseEvent *event)
     // Upon mouse pressed, we store the current position...
     lastMousePos.x = event->x();
     lastMousePos.y = event->y();
-
+    startx = event->x();
+    starty = event->y();
+    std::cout << "first X: " <<startx << ", first Y: " << starty << std::endl;
 }
 
 void OGLWidget::mouseMoveEvent(QMouseEvent *event)
 {
     // ... and while moving, we calculate the dragging deltas
     // Left button: Rotating around x and y axis
-    int rx = (event->buttons() & Qt::LeftButton) ? lastMousePos.y - event->y() : 0;
-    int ry = lastMousePos.x - event->x();
+    //int rx = (event->buttons() & Qt::LeftButton) ? lastMousePos.y - event->y() : 0;
+    //int ry = lastMousePos.x - event->x();
     // Right button: Rotating around z and y axis
-    int rz = (event->buttons() & Qt::RightButton) ? lastMousePos.y - event->y() : 0;
+    //int rz = (event->buttons() & Qt::RightButton) ? lastMousePos.y - event->y() : 0;
 
     
     lastMousePos.x = event->x();
     lastMousePos.y = event->y();
     std::cout << "X: " <<lastMousePos.x << ", Y: " << lastMousePos.y << std::endl;
+    int distx=abs(startx-lastMousePos.x);
+    int disty=abs(starty-lastMousePos.y);
+    distance=sqrt(distx*distx+disty+disty);
+    std::cout << "Distance: " <<distance << std::endl;
+    std::cout << "xtrans: " <<distx << "ytrans: "<< disty<< std::endl;
+
+
 }
 
 void OGLWidget::keyPressEvent(QKeyEvent *event)
