@@ -1,5 +1,6 @@
 
 #include "minigolf.hpp"
+#include <ostream>
 
 namespace golf {
 
@@ -7,6 +8,28 @@ namespace golf {
         // give ball momentum
         ball.setVelocity(Vec3(2, 0, 1));
 
+    }
+
+    void Controller::draw(){
+
+
+
+        glBegin(GL_TRIANGLE_STRIP);
+        glColor3f(1, 0, 1);
+
+//        glVertex3f(0,0.5,0);
+//        glVertex3f(1,0.5,0);
+//        glVertex3f(startxval,0.5,startyval);
+
+
+
+        glVertex3f(0+startpx,0.5,0+startpy);
+        glVertex3f(1+startpx,0.5,0+startpy);
+        glVertex3f(1+startpx,0.5,1+startpy);
+        glVertex3f(0+startpx,0.5,1+startpy);
+
+
+        glEnd();
     }
 
     void Course::draw() {
