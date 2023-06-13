@@ -13,7 +13,8 @@ namespace golf
     {
         READY,
         AIMING,
-        MOVING
+        MOVING,
+        FINISHED
     };
 
     const std::string getScoreTerm(int score, int par);
@@ -56,10 +57,13 @@ namespace golf
         void setBall(Golfball ball) { this->ball = ball; }
         bool hasFinishedHole() { return finishedHole; }
         void reset(Vec3 position);
+        void resetAll();
         void setFinishedHole(bool finishedHole) { this->finishedHole = finishedHole; }
         unsigned int getStrokes() { return strokes; }
         void addStroke() { strokes++; }
         bool isInGame() { return startedHole && !finishedHole; }
+        bool hasStartedHole() { return startedHole; }
+        void startHole();
         void setStartedHole(bool startedHole) { this->startedHole = startedHole; }
     };
     class Game;
@@ -82,12 +86,19 @@ namespace golf
         bool collide(Sphere &sphere);
         void tick(unsigned long long time);
         void checkHole();
+        void drawHole();
     };
 
     class CourseA8 : public Course
     {
     public:
         CourseA8(Game &game);
+    };
+
+    class Course2 : public Course
+    {
+    public:
+        Course2(Game &game);
     };
 
     // a controller for storing, changing and displaying golf shots
@@ -110,8 +121,13 @@ namespace golf
 
     private:
         Controller controller;
-        Course *course;
+        Course *course = nullptr;
         std::vector<Player> players;
+        int currentPlayer = 0;
+        ShotState shotState = ShotState::READY;
+        unsigned int noMovementCounter = 0;
+        Vec3 shotStart;
+        Vec3 lastBallPosition;
         unsigned int currentLevel = -1;
 
     public:
@@ -127,6 +143,9 @@ namespace golf
         void startGame();
         bool nextLevel();
         void endGame();
+        void getNextPlayer();
+        void shootBall(Vec3 velocity);
+        void setLevel(Course* course);
     };
 
 };
