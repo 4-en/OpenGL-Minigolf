@@ -71,22 +71,11 @@ class Controller : public SimObject {
 private:
     double strength = 0;
     double direction = 0;
-    int startxval = 1;
-    int startyval = 1;
-    int startpx = 0;
-    int startpy=0;
     //...
     //Ball&
 
 public:
     Controller() {}
-    void draw();
-    double getStrength(){return strength;}
-    double getDirection(){return direction;}
-    void setStartxval(int xstart) { this->startxval = xstart; }
-    void setStartyval(int ystart) { this->startyval = ystart; }
-    void setStartpx(int px) { this->startpx = px; }
-    void setStartpy(int py) { this->startpy = py; }
 };
 
 // the top class controlling other parts like course, controller, ...
