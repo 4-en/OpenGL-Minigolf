@@ -22,6 +22,7 @@ public:
 
     // Used to rotate object by mouse
     void mousePressEvent(QMouseEvent *event);
+    void mouseReleaseEvent(QMouseEvent *event);
     void mouseMoveEvent(QMouseEvent *event);
 
     // Used to rotate object by keys (requires focus for OpenGL widget)
@@ -46,6 +47,10 @@ protected:
     bool running = false;
     golf::Game game;
     void setSphereRadius(int idx, int value);
+    Vec3 screenToWorld(int x, int y);
+    QMatrix4x4 projectionMatrix;
+    QMatrix4x4 modelViewMatrix;
+    GLint viewport[4];
 
 protected:
     double parama;

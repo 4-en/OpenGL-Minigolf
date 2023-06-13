@@ -126,13 +126,20 @@ namespace golf
     {
 
     private:
-        double strength = 0;
+        double maxLength = 3;
         double direction = 0;
-        //...
-        // Ball&
+        Game& game;
+        Vec3 mouseStart;
+        bool mouseHeld = false;
+        Vec3 mouseLast;
+        bool mouseReleased = false;
 
     public:
-        Controller() {}
+        Controller(Game& game) : game(game) {}
+        void draw();
+        void tick(unsigned long long time);
+        void holdMouse(Vec3 mousePos);
+        void releaseMouse();
     };
 
     // the top class controlling other parts like course, controller, ...
@@ -166,6 +173,8 @@ namespace golf
         void getNextPlayer();
         void shootBall(Vec3 velocity);
         void setLevel(Course* course);
+        int getCurrentPlayer() { return currentPlayer; }
+        ShotState getShotState() { return shotState; }
     };
 
 };
