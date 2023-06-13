@@ -315,7 +315,9 @@ namespace golf {
 
     void Course4::tick(unsigned long long time) {
         Course::tick(time);
-        this->obstacle->getPosition().z = sin(time/(1000.0*1000.0*1000.0))*2;
+        auto p = this->obstacle->getPosition();
+        p.z = sin(time/(1000.0*1000.0*1000.0))*2;
+        this->obstacle->setPosition(p);
     }
 
     void Controller::draw() {
