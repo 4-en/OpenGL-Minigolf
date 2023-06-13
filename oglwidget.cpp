@@ -296,11 +296,8 @@ void OGLWidget::mouseMoveEvent(QMouseEvent *event)
     game.getController().setStartxval(distx/20);
     game.getController().setStartyval(disty/20);
 
-    Vec3 ap=game.getController().getarrowpoint();
-    float d1 = abs((ap.x+0.125)-(ap.x+abs(distx/20)));
-    float d2 = abs(ap.z-(ap.z+abs(disty/20)));
-    float adistance =sqrt(d1*d1+d2*d2);
-    std::cout << "ArrowDistance " <<distance<< disty<< std::endl;
+
+    std::cout << "ArrowDistance " <<game.getController().getArrowLength() << disty<< std::endl;
  ;
 
 }

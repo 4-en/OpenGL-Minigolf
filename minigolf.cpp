@@ -25,15 +25,38 @@ namespace golf {
 
     void Controller::draw(){
 
+
+        glBegin(GL_QUADS);
+
+        glColor3f(1, 0, 1);
+        glVertex3f(arrowpoint.x+0,0.5,arrowpoint.z+0);
+        glVertex3f(arrowpoint.x+0.25,0.5,arrowpoint.z+0);
+        glVertex3f(arrowpoint.x+0.25,0.5,arrowpoint.z+0.25);
+        glVertex3f(arrowpoint.x+0,0.5,arrowpoint.z+0.25);
+
+        glEnd();
         glBegin(GL_TRIANGLE_STRIP);
         glColor3f(1, 0, 1);
+
               glVertex3f(arrowpoint.x+startxval,0.5,arrowpoint.z+startyval);
               glVertex3f(arrowpoint.x+0,0.5,arrowpoint.z+0);
+              glVertex3f(arrowpoint.x+startxval,0.5,arrowpoint.z+startyval);
               glVertex3f(arrowpoint.x+0.25,0.5,arrowpoint.z+0);
-             // glVertex3f(arrowpoint.x+0.125,0.5,arrowpoint.z+0.25);
+              glVertex3f(arrowpoint.x+startxval,0.5,arrowpoint.z+startyval);
+              glVertex3f(arrowpoint.x+0.25,0.5,arrowpoint.z+0.25);
+              glVertex3f(arrowpoint.x+startxval,0.5,arrowpoint.z+startyval);
+              glVertex3f(arrowpoint.x+0,0.5,arrowpoint.z+0.25);
+              glVertex3f(arrowpoint.x+startxval,0.5,arrowpoint.z+startyval);
 
 
 
+              // glVertex3f(arrowpoint.x+0.125,0.5,arrowpoint.z+0.25);
+
+              float dx = (arrowpoint.x+0.125)-(arrowpoint.x+abs(startxval));
+              float dy = (arrowpoint.z)-(arrowpoint.z+abs(startyval));
+              setArrowLength(
+                  sqrt(dx*dx+dy*dy)
+                  );
 
 
 //        glVertex3f(0+startpx,0.5,0+startpy);
@@ -45,8 +68,7 @@ namespace golf {
         glEnd();
     }
 
-    void Controller::convertinto3d(int xc,int yc){
-    }
+
 
     void Player::startHole() {
         startedHole = true;
