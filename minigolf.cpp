@@ -413,6 +413,21 @@ namespace golf {
     void Game::tick(unsigned long long time) {
 
         checkHoleEnding();
+        /*
+        switch(shotState) {
+            case ShotState::READY:
+                std::cout << "Ready" << std::endl;
+                break;
+            case ShotState::AIMING:
+                std::cout << "Aiming" << std::endl;
+                break;
+            case ShotState::MOVING: 
+                std::cout << "Moving" << std::endl;
+                break;
+            case ShotState::FINISHED:   
+                std::cout << "Finished" << std::endl;
+                break;
+        }*/
 
         switch (shotState)
         {
