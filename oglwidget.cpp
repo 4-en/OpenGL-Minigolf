@@ -356,8 +356,6 @@ void OGLWidget::mouseMoveEvent(QMouseEvent *event)
     //std::cout << " X: " << worldPos.x << ", Z: " << worldPos.z << std::endl;
     game.getController().holdMouse(worldPos);
 
-
-    std::cout << "ArrowDistance " <<game.getController().getArrowLength() << disty<< std::endl;
  ;
 
 }
