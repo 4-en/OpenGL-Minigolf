@@ -380,12 +380,10 @@ void Triangle::draw()
     glPushMatrix();
     glBegin(GL_TRIANGLES);
     glTranslatef(position.x, position.y, position.z);
-    glColor3f(1.0f, 0.0f, 0.0f);
+    glColor3f(color.x, color.y, color.z);
     glNormalVec3(getNormal());
     glVertex3f(p1.x, p1.y, p1.z);
-    glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(p2.x, p2.y, p2.z);
-    glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(p3.x, p3.y, p3.z);
     glEnd();
     glPopMatrix();
