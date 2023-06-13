@@ -29,11 +29,9 @@ void OGLWidget::runSim()
         lastTime = std::chrono::high_resolution_clock::now();
         // parama+=0.1;
         dt = dtime * paramb;
-        game.tick(lastTime.time_since_epoch().count());
         // apply gravity
         for (golf::Player& player : game.getPlayers())
         {
-            if(!player.isInGame()) continue;
             Sphere& sphere = player.getBall();
             // calculate gravity for planet
             double mass = sphere.getMass();
@@ -50,7 +48,6 @@ void OGLWidget::runSim()
         // apply velocity
         for (golf::Player& player : game.getPlayers())
         {
-            if(!player.isInGame()) continue;
             Sphere& sphere = player.getBall();
             auto movement = sphere.getVelocity() * dt;
             sphere.move(movement);
@@ -60,7 +57,6 @@ void OGLWidget::runSim()
         std::vector<Sphere *> bouncedSpheres;
         for (golf::Player& player : game.getPlayers())
         {
-            if(!player.isInGame()) continue;
             Sphere& sphere = player.getBall();
 
             // check collision with golf objects
@@ -72,7 +68,6 @@ void OGLWidget::runSim()
 
             for (golf::Player& player : game.getPlayers())
             {
-                if(!player.isInGame()) continue;
                 Sphere& other = player.getBall();
 
                 // continue if same pointer
@@ -94,13 +89,11 @@ void OGLWidget::runSim()
         update();
 
         // print update every second
-        /*
         if (frame % fps == 0)
         {
             auto secondsFromFrames = frame / fps;
             std::cout << "\rFPS: " << fps << " Frame: " << frame << " Seconds: " << secondsFromFrames <<"             " << std::flush;
         }
-        */
         std::this_thread::sleep_until(lastTime + waitTime);
         frame++;
     }
@@ -229,6 +222,12 @@ void OGLWidget::paintGL()
     }
 
     game.draw();
+
+    for (golf::Player& player : game.getPlayers())
+    {
+        // s.setRadius(paramc);
+        player.getBall().draw();
+    }
 
 
     glPopMatrix();
