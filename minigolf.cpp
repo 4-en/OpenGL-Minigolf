@@ -32,6 +32,10 @@ namespace golf {
         }
     }
 
+    void Course::tick(unsigned long long time) {
+        
+    }
+
     CourseA8::CourseA8(Game& game) : Course(game) {
         // set hole position
         holePosition = Vec3(4, 0, 8);
@@ -63,11 +67,6 @@ namespace golf {
 
     }
 
-    enum class ShotState {
-        READY,
-        AIMING,
-        MOVING
-    };
 
     Game::Game() {
         // create a player
@@ -98,6 +97,7 @@ namespace golf {
         // draw controller
         controller.draw();
 
-        // draw ui
     }
+
+
 }

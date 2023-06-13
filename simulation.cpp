@@ -223,7 +223,7 @@ void SimObject::applyCollisionVelocity(const Vec3& newVelocity, const Vec3& othe
     // check if collision is a bounce or roll
     double dot = newVelocity.normalized().dot(otherNormal);
     if (true || newVelocity.lengthSquared()<0.1) {
-        std::cout << "Rolling" << std::endl;
+        //std::cout << "Rolling" << std::endl;
         // roll
         // Ff = mu * N
         // force is opposite to velocity
@@ -234,7 +234,7 @@ void SimObject::applyCollisionVelocity(const Vec3& newVelocity, const Vec3& othe
         
         double fVel = acc * dt;
         if (fVel > newVelocity.length()) {
-            std::cout << "Setting vel to 0" << std::endl;
+            //std::cout << "Setting vel to 0" << std::endl;
             this->velocity = Vec3(0, 0, 0);
             return;
         }
@@ -247,7 +247,7 @@ void SimObject::applyCollisionVelocity(const Vec3& newVelocity, const Vec3& othe
         this->velocity = velDir * (newVelocity.length()-fVel);
     }
     else {
-        std::cout << dot << std::endl;
+        //std::cout << dot << std::endl;
         // bounce
         // test: only reduce velocity in normal dir
         //this->velocity = newVelocity - (1 -  calcBounceFactor(other)) * dot * otherNormal * newVelocity.length();
@@ -310,7 +310,7 @@ double SimObject::calcBounceFactor(const SimObject &other)
     return factor;
 }
 
-void SimObject::tick(double time)
+void SimObject::tick(unsigned long long time)
 {
     // tick children
     for (SimObject *child : children)

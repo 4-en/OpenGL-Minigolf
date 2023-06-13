@@ -119,7 +119,7 @@ public:
     virtual bool collide(Sphere& sphere) { return false; }
     void applyCollisionVelocity(const Vec3& newVelocity, const Vec3& otherNormal, const SimObject& otherObject);
 
-    virtual void tick(double time);
+    virtual void tick(unsigned long long time);
     virtual void draw();
     virtual double getMass() { return static_cast<double>(LLONG_MAX); }
 };

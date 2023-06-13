@@ -29,6 +29,7 @@ void OGLWidget::runSim()
         lastTime = std::chrono::high_resolution_clock::now();
         // parama+=0.1;
         dt = dtime * paramb;
+        game.tick(lastTime.time_since_epoch().count());
         // apply gravity
         for (golf::Player& player : game.getPlayers())
         {
@@ -89,11 +90,13 @@ void OGLWidget::runSim()
         update();
 
         // print update every second
+        /*
         if (frame % fps == 0)
         {
             auto secondsFromFrames = frame / fps;
             std::cout << "\rFPS: " << fps << " Frame: " << frame << " Seconds: " << secondsFromFrames <<"             " << std::flush;
         }
+        */
         std::this_thread::sleep_until(lastTime + waitTime);
         frame++;
     }
