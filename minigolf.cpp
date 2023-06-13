@@ -64,10 +64,24 @@ namespace golf {
 
     void Course::drawHole() {
         // draw hole
-        Sphere hole(holePosition, holeRadius);
-        hole.draw();
 
         // TODO: draw flag
+        glColor3f(0.3, 0.3, 0.3);
+        glPushMatrix();
+        glTranslatef(holePosition.x, holePosition.y, holePosition.z);
+        glLineWidth(5);
+        glBegin(GL_LINES);
+        glVertex3f(0, 0, 0);
+        glVertex3f(0, 4, 0);
+        glEnd();
+        glBegin(GL_TRIANGLES);
+        glColor3f(0.9, 1, 0.9);
+        glVertex3f(0, 4, 0);
+        glVertex3f(0.7, 3.5, 0);
+        glVertex3f(0, 3, 0);
+        glEnd();
+        glPopMatrix();
+
     }
 
     bool Course::collide(Sphere& sphere) {
@@ -115,8 +129,8 @@ namespace golf {
                 Vec3 p2(x + resolution, heightFunction(x + resolution, y), y);
                 Vec3 p3(x, heightFunction(x, y + resolution), y + resolution);
                 Vec3 p4(x + resolution, heightFunction(x + resolution, y + resolution), y + resolution);
-                triangles.push_back(new Triangle(p3, p1, p2));
-                triangles.push_back(new Triangle(p3, p4, p2));
+                triangles.push_back(new GroundTile(p3, p1, p2));
+                triangles.push_back(new GroundTile(p3, p4, p2));
             }
         }
 
@@ -128,10 +142,12 @@ namespace golf {
         double y1 = heightFunction(x1, z1);
         double y2 = heightFunction(x2, z2);
 
-        Vec3 c1 = Vec3(x1, y1-height/2, z1);
-        Vec3 c2 = Vec3(x1, y1+height, z1);
-        Vec3 c3 = Vec3(x2, y2+height, z2);
-        Vec3 c4 = Vec3(x2, y2-height/2, z2);
+
+        // TODO: somewhere nan for some reason
+        Vec3 c1 = Vec3(x1, y1-height/2, z1+0.001);
+        Vec3 c2 = Vec3(x1, y1+height, z1+0.002);
+        Vec3 c3 = Vec3(x2, y2+height, z2+0.003);
+        Vec3 c4 = Vec3(x2, y2-height/2, z2+0.004);
 
         Wall* wall = new Wall(c1, c2, c3, c4);
         return wall;
@@ -217,24 +233,87 @@ namespace golf {
         
     }
 
-    Course3::Course3(Game& game) : Course(game, Vec3(2.5, 0, -2), Vec3(-4, 0.5, -1.5)) {
+    Course3::Course3(Game& game) : Course(game, Vec3(4, 1.8, 0), Vec3(-3, 0.5, -1.5)) {
         // set hole radius
         holeRadius = 0.4;
 
         // par
         par = 4;
 
-        // add walls
         auto heightFunction = [](double x, double y) {
-            return sin(x/3) + cos(y/2);
+            return (sin(x/3) + cos(y/2));
         };
+
+        auto minHeightFunction = [&](double x, double y) {
+            double height = heightFunction(x, y);
+            double minHeight = 0;
+            if (height < minHeight) {
+                return minHeight;
+            }
+            return height;
+        };
+
+        std::vector<Triangle*> triangles = createFloor(-5, 5, 0.5, minHeightFunction);
+        for (Triangle* triangle : triangles) {
+            addChild(triangle);
+        }
+
+        std::vector<double> xz;
+        for(double i = 0; i < 2*PI; i += PI/16) {
+            xz.push_back(5 * cos(i));
+            xz.push_back(5 * sin(i));
+        }
+
+        auto walls = buildWallsOnGround(xz, 1, minHeightFunction);
+        for (Wall* wall : walls) {
+            addChild(wall);
+        }
+
+        
+    }
+
+    Course4::Course4(Game& game) : Course(game, Vec3(2, 0, 3), Vec3(-3.5, 0.5, -1)) {
+        // set hole radius
+        holeRadius = 0.4;
+
+        // par
+        par = 4;
+
+        auto heightFunction = [](double x, double y) {
+            double start = -2;
+            double end = 0;
+            double height = 0;
+            if (x > start && x < end) {
+                x -= start;
+                x *= PI/2;
+                height = sin(x)*0.5;
+            }
+            return height;
+        };
+
+        
 
         std::vector<Triangle*> triangles = createFloor(-5, 5, 0.5, heightFunction);
         for (Triangle* triangle : triangles) {
             addChild(triangle);
         }
+        std::vector<double> xz = {-4, -2, -4, 0, 1, 0, 1, 0, 1, 4, 3, 4, 3, 0, 1, -2};
+
+        auto walls = buildWallsOnGround(xz, 1, heightFunction);
+        for (Wall* wall : walls) {
+            addChild(wall);
+        }
+
+        // add obstacles
+        obstacle = new Pillar(Vec3(1, 0, 2), 0.5, 4);
+        addChild(obstacle);
 
         
+    }
+
+    void Course4::tick(unsigned long long time) {
+        Course::tick(time);
+        this->obstacle->getPosition().z = sin(time/(1000.0*1000.0*1000.0))*2;
     }
 
 
@@ -290,6 +369,12 @@ namespace golf {
             break;
         case 1:
             setLevel(new Course2(*this));
+            break;
+        case 2:
+            setLevel(new Course3(*this));
+            break;
+        case 3:
+            setLevel(new Course4(*this));
             break;
         default:
             setLevel(nullptr);
@@ -401,7 +486,7 @@ namespace golf {
             return;
         }
         shotStart = players[currentPlayer].getBall().getPosition();
-        shotState == ShotState::AIMING;
+        shotState = ShotState::AIMING;
         
     }
 
@@ -413,6 +498,7 @@ namespace golf {
     void Game::tick(unsigned long long time) {
 
         checkHoleEnding();
+
         /*
         switch(shotState) {
             case ShotState::READY:
@@ -427,7 +513,8 @@ namespace golf {
             case ShotState::FINISHED:   
                 std::cout << "Finished" << std::endl;
                 break;
-        }*/
+        }
+        */
         // ...
 
         switch (shotState)
@@ -479,6 +566,7 @@ namespace golf {
         default:
             return;
         }
+
 
         // tick course
         if(course != nullptr)
