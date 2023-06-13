@@ -16,6 +16,8 @@ namespace golf
         MOVING
     };
 
+    const std::string getScoreTerm(int score, int par);
+
     class GroundTile : public Triangle
     {
     public:
@@ -39,6 +41,9 @@ namespace golf
     private:
         std::string name;
         unsigned int score = 0;
+        unsigned int strokes = 0;
+        bool finishedHole = false;
+        bool startedHole = false;
         Golfball ball;
 
     public:
@@ -49,6 +54,13 @@ namespace golf
         void setScore(unsigned int score) { this->score = score; }
         Golfball &getBall() { return ball; }
         void setBall(Golfball ball) { this->ball = ball; }
+        bool hasFinishedHole() { return finishedHole; }
+        void reset(Vec3 position);
+        void setFinishedHole(bool finishedHole) { this->finishedHole = finishedHole; }
+        unsigned int getStrokes() { return strokes; }
+        void addStroke() { strokes++; }
+        bool isInGame() { return startedHole && !finishedHole; }
+        void setStartedHole(bool startedHole) { this->startedHole = startedHole; }
     };
     class Game;
     // a base golf course with walls, floor, obstacles and a hole
@@ -59,15 +71,17 @@ namespace golf
         double holeRadius;
         Vec3 startPosition;
         Game &game;
+        unsigned int par = 3;
 
     public:
-        Course(Game &game) : game(game) {}
+        Course(Game &game, Vec3 holePosition, Vec3 startPosition);
         void draw();
         const Vec3 &getHolePosition() { return holePosition; }
         double getHoleRadius() { return holeRadius; }
         const Vec3 &getStartPosition() { return startPosition; }
         bool collide(Sphere &sphere);
         void tick(unsigned long long time);
+        void checkHole();
     };
 
     class CourseA8 : public Course
@@ -108,6 +122,11 @@ namespace golf
         Course &getCourse() { return *course; }
         void draw();
         bool collide(Sphere &sphere);
+        void tick(unsigned long long time);
+        void checkHoleEnding();
+        void startGame();
+        bool nextLevel();
+        void endGame();
     };
 
 };

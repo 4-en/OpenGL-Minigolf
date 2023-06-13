@@ -33,6 +33,7 @@ void OGLWidget::runSim()
         // apply gravity
         for (golf::Player& player : game.getPlayers())
         {
+            if(!player.isInGame()) continue;
             Sphere& sphere = player.getBall();
             // calculate gravity for planet
             double mass = sphere.getMass();
@@ -49,6 +50,7 @@ void OGLWidget::runSim()
         // apply velocity
         for (golf::Player& player : game.getPlayers())
         {
+            if(!player.isInGame()) continue;
             Sphere& sphere = player.getBall();
             auto movement = sphere.getVelocity() * dt;
             sphere.move(movement);
@@ -58,6 +60,7 @@ void OGLWidget::runSim()
         std::vector<Sphere *> bouncedSpheres;
         for (golf::Player& player : game.getPlayers())
         {
+            if(!player.isInGame()) continue;
             Sphere& sphere = player.getBall();
 
             // check collision with golf objects
@@ -69,6 +72,7 @@ void OGLWidget::runSim()
 
             for (golf::Player& player : game.getPlayers())
             {
+                if(!player.isInGame()) continue;
                 Sphere& other = player.getBall();
 
                 // continue if same pointer
@@ -225,12 +229,6 @@ void OGLWidget::paintGL()
     }
 
     game.draw();
-
-    for (golf::Player& player : game.getPlayers())
-    {
-        // s.setRadius(paramc);
-        player.getBall().draw();
-    }
 
 
     glPopMatrix();
