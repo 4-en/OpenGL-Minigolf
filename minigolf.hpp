@@ -140,6 +140,7 @@ namespace golf
         void tick(unsigned long long time);
         void holdMouse(Vec3 mousePos);
         void releaseMouse();
+
     };
 
     // the top class controlling other parts like course, controller, ...

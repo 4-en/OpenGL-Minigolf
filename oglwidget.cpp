@@ -252,6 +252,7 @@ void OGLWidget::paintGL()
     }
 
 
+
     // Get the current OpenGL model-view matrix
     GLfloat modelViewMatrixData[16];
     glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrixData);
@@ -301,6 +302,7 @@ Vec3 OGLWidget::screenToWorld(int x, int y) {
 
     return Vec3(rayWorld.x(), 0, rayWorld.z());
 
+
 }
 
 bool OGLWidget::showAxis = false;
@@ -324,6 +326,7 @@ void OGLWidget::mousePressEvent(QMouseEvent *event)
     lastMousePos.y = event->y();
     startx = event->x();
     starty = event->y();
+
     
     //std::cout << "first X: " <<startx << ", first Y: " << starty << std::endl;
     //game.getController().holdMouse(lastMousePos);
@@ -333,6 +336,7 @@ void OGLWidget::mouseReleaseEvent(QMouseEvent *event) {
     // something
     //std::cout << " Release " << std::endl;
     game.getController().releaseMouse();
+
 }
 
 void OGLWidget::mouseMoveEvent(QMouseEvent *event)
@@ -352,6 +356,9 @@ void OGLWidget::mouseMoveEvent(QMouseEvent *event)
     //std::cout << " X: " << worldPos.x << ", Z: " << worldPos.z << std::endl;
     game.getController().holdMouse(worldPos);
 
+
+    std::cout << "ArrowDistance " <<game.getController().getArrowLength() << disty<< std::endl;
+ ;
 
 }
 
