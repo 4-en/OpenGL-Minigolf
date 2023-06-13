@@ -194,10 +194,13 @@ void OGLWidget::paintGL()
 
     // rotate with gravity
     //glRotatef(gravDirection, 0, 0, 1);
-
+    QMatrix4x4 qViewMatrix;
     glRotatef(-45, 1, 0, 0);
+    qViewMatrix.rotate(-45, 1, 0, 0);
     glRotatef(-135, 0, 1, 0);
+    qViewMatrix.rotate(-135, 0, 1, 0);
     glScaled(0.1, 0.1, 0.1);
+    qViewMatrix.scale(0.1, 0.1, 0.1);
 
     float lightRot = parama * 36;
     glPushMatrix();
@@ -230,13 +233,74 @@ void OGLWidget::paintGL()
 
     game.draw();
 
+    glPushMatrix();
+
+
+    glGetIntegerv(GL_VIEWPORT, viewport);
+
+    GLfloat normalizedX = (2.0f * lastMousePos.x - viewport[0]) / viewport[2] - 1.0f;
+    GLfloat normalizedY = 1.0f - (4.0f *lastMousePos.y - viewport[1]) / viewport[3];
+
+    
+    //GLfloat modelViewMatrix[16];
+    GLfloat projectionMatrixData[16];
+
+    glGetFloatv(GL_PROJECTION_MATRIX, projectionMatrixData);
+
+    for(int i = 0; i < 16; i++) {
+        projectionMatrix.data()[i] = projectionMatrixData[i];
+    }
+
+
+
+    // Get the current OpenGL model-view matrix
+    GLfloat modelViewMatrixData[16];
+    glGetFloatv(GL_MODELVIEW_MATRIX, modelViewMatrixData);
+    for(int i = 0; i < 16; i++) {
+        modelViewMatrix.data()[i] = modelViewMatrixData[i];
+    }
+
+    Vec3 worldMouse = screenToWorld(lastMousePos.x, lastMousePos.y);
+
+    
+    /*
+    Sphere s;
+    s.setRadius(0.2);
+    s.setPosition(worldMouse);
+    s.draw();
+    */
+    
+    glPopMatrix();
+    
+
 
 
 
     glPopMatrix();
 
 
+    
+}
 
+Vec3 OGLWidget::screenToWorld(int x, int y) {
+
+
+    GLfloat normalizedX = (2.0f * x - viewport[0]) / viewport[2] - 1.0f;
+    GLfloat normalizedY = 1.0f - (4.0f *y - viewport[1]) / viewport[3];
+
+    
+    QMatrix4x4 projectionMatrixInverse = projectionMatrix.inverted();
+    QVector4D rayClip(normalizedX, normalizedY, 1.0f, 1.0f);
+    QVector4D rayView = projectionMatrixInverse * rayClip;
+    
+    double w = rayView.w();
+    QVector3D rayView3D(rayView.x() / w, rayView.y() / w, rayView.z() / w);
+
+    // Transform the ray to world space
+    QMatrix4x4 modelViewMatrixInverse = modelViewMatrix.inverted();
+    QVector4D rayWorld = modelViewMatrixInverse * QVector4D(rayView3D, 1.0f);
+
+    return Vec3(rayWorld.x(), 0, rayWorld.z());
 
 
 }
@@ -262,15 +326,16 @@ void OGLWidget::mousePressEvent(QMouseEvent *event)
     lastMousePos.y = event->y();
     startx = event->x();
     starty = event->y();
-    std::cout << "first X: " <<startx << ", first Y: " << starty << std::endl;
-    game.getController().setStartpx(startx/200);
-    game.getController().setStartpy(starty/200);
-    game.getController().setArrowPoint(game.getCourse().getStartPosition());
-    //game.getController().draw();
 
+    
+    //std::cout << "first X: " <<startx << ", first Y: " << starty << std::endl;
+    //game.getController().holdMouse(lastMousePos);
+}
 
-
-
+void OGLWidget::mouseReleaseEvent(QMouseEvent *event) {
+    // something
+    //std::cout << " Release " << std::endl;
+    game.getController().releaseMouse();
 
 }
 
@@ -283,18 +348,13 @@ void OGLWidget::mouseMoveEvent(QMouseEvent *event)
     // Right button: Rotating around z and y axis
     //int rz = (event->buttons() & Qt::RightButton) ? lastMousePos.y - event->y() : 0;
 
-    
+
     lastMousePos.x = event->x();
     lastMousePos.y = event->y();
-    std::cout << "X: " <<lastMousePos.x << ", Y: " << lastMousePos.y << std::endl;
-    int distx=startx-lastMousePos.x;
-    int disty=starty-lastMousePos.y;
-    distance=sqrt(distx*distx+disty+disty);
-    //std::cout << "Distance: " <<distance << std::endl;
-    //std::cout << "xtrans: " <<distx << "ytrans: "<< disty<< std::endl;
 
-    game.getController().setStartxval(distx/20);
-    game.getController().setStartyval(disty/20);
+    Vec3 worldPos = screenToWorld(event->x(), event->y());
+    //std::cout << " X: " << worldPos.x << ", Z: " << worldPos.z << std::endl;
+    game.getController().holdMouse(worldPos);
 
 
     std::cout << "ArrowDistance " <<game.getController().getArrowLength() << disty<< std::endl;

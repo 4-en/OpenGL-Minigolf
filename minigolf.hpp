@@ -126,30 +126,20 @@ namespace golf
     {
 
     private:
-        double strength = 0;
+        double maxLength = 3;
         double direction = 0;
-        int startxval = 1;
-        int startyval = 1;
-        int startpx = 0;
-        int startpy=0;
-        float arrowLength=0;
-        Vec3 arrowpoint=Vec3(0,0,0);
-        //...
-        // Ball&
+        Game& game;
+        Vec3 mouseStart;
+        bool mouseHeld = false;
+        Vec3 mouseLast;
+        bool mouseReleased = false;
 
     public:
-        Controller() {}
+        Controller(Game& game) : game(game) {}
         void draw();
-        double getStrength(){return strength;}
-        double getDirection(){return direction;}
-        float getArrowLength(){return arrowLength;}
-        Vec3 getarrowpoint(){return arrowpoint;}
-        void setStartxval(int xstart) { this->startxval = xstart; }
-        void setStartyval(int ystart) { this->startyval = ystart; }
-        void setStartpx(int px) { this->startpx = px; }
-        void setStartpy(int py) { this->startpy = py; }
-        void setArrowLength(float l){this->arrowLength=l;};
-        void setArrowPoint(Vec3 v){ this->arrowpoint = v; }
+        void tick(unsigned long long time);
+        void holdMouse(Vec3 mousePos);
+        void releaseMouse();
 
     };
 
@@ -184,6 +174,8 @@ namespace golf
         void getNextPlayer();
         void shootBall(Vec3 velocity);
         void setLevel(Course* course);
+        int getCurrentPlayer() { return currentPlayer; }
+        ShotState getShotState() { return shotState; }
     };
 
 };

@@ -60,7 +60,7 @@ namespace golf {
 
     void Player::startHole() {
         startedHole = true;
-        ball.setVelocity(Vec3(2,0,2));
+        //ball.setVelocity(Vec3(2,0,2));
     }
 
     void Player::reset(Vec3 position) {
@@ -91,6 +91,8 @@ namespace golf {
 
         for (Player& player : game.getPlayers()) {
             // draw ball
+            Golfball& ball = player.getBall();
+            //std::cout << ball.getPosition().x << ", " << ball.getPosition().y << ", " << ball.getPosition().z << std::endl;
             if (!player.isInGame()) continue;
             player.getBall().draw();
             
@@ -179,10 +181,10 @@ namespace golf {
 
 
         // TODO: somewhere nan for some reason
-        Vec3 c1 = Vec3(x1, y1-height/2, z1+0.001);
-        Vec3 c2 = Vec3(x1, y1+height, z1+0.002);
-        Vec3 c3 = Vec3(x2, y2+height, z2+0.003);
-        Vec3 c4 = Vec3(x2, y2-height/2, z2+0.004);
+        Vec3 c1 = Vec3(x1+0.001, y1-height/2+0.001, z1+0.001);
+        Vec3 c2 = Vec3(x1+0.002, y1+height+0.002, z1+0.002);
+        Vec3 c3 = Vec3(x2+0.003, y2+height+0.003, z2+0.003);
+        Vec3 c4 = Vec3(x2+0.004, y2-height/2+0.004, z2+0.004);
 
         Wall* wall = new Wall(c1, c2, c3, c4);
         return wall;
@@ -351,8 +353,82 @@ namespace golf {
         this->obstacle->getPosition().z = sin(time/(1000.0*1000.0*1000.0))*2;
     }
 
+    void Controller::draw() {
+        if(game.getShotState() != ShotState::AIMING) return;
 
-    Game::Game() {
+        // draw arrow to indicate shot direction and power
+
+        if(game.getCurrentPlayer() < 0) return;
+
+        Player& player = game.getPlayers()[game.getCurrentPlayer()];
+        if(!player.isInGame()) return;
+        if(!mouseHeld) return;
+
+
+        Vec3 ballPosition = player.getBall().getPosition();
+        Vec3 direction = mouseLast - ballPosition;
+        if(direction.length() > maxLength) {
+            direction = direction.normalized() * maxLength;
+        }
+        Vec3 arrowEnd = ballPosition + direction;
+        // draw arrow
+        glColor3f(0.2, 0.1, 1);
+        glLineWidth(5);
+        glBegin(GL_LINES);
+        glVertex3f(ballPosition.x, ballPosition.y, ballPosition.z);
+        glVertex3f(arrowEnd.x, arrowEnd.y, arrowEnd.z);
+        glEnd();
+
+    }
+
+    void Controller::holdMouse(Vec3 mousePos) {
+        if(game.getShotState() != ShotState::AIMING) return;
+        if(game.getCurrentPlayer() < 0) return;
+
+        Player& player = game.getPlayers()[game.getCurrentPlayer()];
+
+        if(!mouseHeld) {
+
+            Vec3 ballNoY = player.getBall().getPosition();
+            ballNoY.y = 0;
+            if(mousePos.getDistance(ballNoY) > player.getBall().getRadius()*2) return;
+
+            mouseHeld = true;
+            mouseStart = mousePos;
+        }
+        mouseLast = mousePos;
+    }
+
+    void Controller::releaseMouse() {
+        if(game.getShotState() != ShotState::AIMING) return;
+        if(!mouseHeld) return;
+        mouseReleased = true;
+    }
+
+    void Controller::tick(unsigned long long time) {
+        if(game.getShotState() != ShotState::AIMING) return;
+        if(game.getCurrentPlayer() < 0) return;
+
+        Player& player = game.getPlayers()[game.getCurrentPlayer()];
+
+        if(this->mouseReleased) {
+            // shoot ball
+            Vec3 ballPosition = player.getBall().getPosition();
+            Vec3 direction = mouseLast - ballPosition;
+            if(direction.length() > maxLength) {
+                direction = direction.normalized() * maxLength;
+            }
+            game.shootBall(direction);
+            std::cout << "Shooting!" << std::endl;
+
+            this->mouseReleased = false;
+            this->mouseHeld = false;
+        }
+
+    }
+
+
+    Game::Game() : controller(*this) {
         // create a player
         Player player("Player 1");
         // add player to game
@@ -406,9 +482,6 @@ namespace golf {
             setLevel(new Course2(*this));
             break;
         case 2:
-            setLevel(new Course3(*this));
-            break;
-        case 3:
             setLevel(new Course4(*this));
             break;
         default:
@@ -528,6 +601,7 @@ namespace golf {
     void Game::setLevel(Course* course) {
         if(this->course != nullptr) delete(this->course);
         this->course = course;
+        shotState = ShotState::READY;
     }
 
     void Game::tick(unsigned long long time) {
@@ -551,6 +625,17 @@ namespace golf {
         }
         */
         // ...
+        // check if ball is out of bounds
+        if(currentPlayer >= 0)
+            if(players[currentPlayer].getBall().getPosition().y < -10 && players[currentPlayer].isInGame()) {
+                // out of bounds
+                players[currentPlayer].getBall().setPosition(course->getStartPosition());
+                players[currentPlayer].getBall().setVelocity(Vec3(0));
+                shotState = ShotState::AIMING;
+                // give penalty
+                players[currentPlayer].addStroke();
+                std::cout << players[currentPlayer].getName() << " is out of bounds!" << std::endl;
+            }
 
         switch (shotState)
         {
@@ -564,7 +649,7 @@ namespace golf {
                     break;
             }
             // set to moving since no controller is used
-            shotState = ShotState::MOVING;
+            //shotState = ShotState::MOVING;
             // aim the shot
             // wait for shot from controller
             break;
@@ -583,18 +668,8 @@ namespace golf {
             if(noMovementCounter>120) {
                 shotState = ShotState::READY;
             }
+            lastBallPosition = players[currentPlayer].getBall().getPosition();
 
-            // check if ball is out of bounds
-            if(players[currentPlayer].getBall().getPosition().y < -10) {
-                // out of bounds
-                players[currentPlayer].getBall().setPosition(shotStart);
-                players[currentPlayer].getBall().setVelocity(Vec3(0));
-                shotState = ShotState::AIMING;
-                // give penalty
-                players[currentPlayer].addStroke();
-                std::cout << players[currentPlayer].getName() << " is out of bounds!" << std::endl;
-                break;
-            }
             break;
         case ShotState::FINISHED:
             startGame();
@@ -608,7 +683,8 @@ namespace golf {
             course->tick(time);
 
         // tick controller
-        controller.tick(time);
+        if(shotState == ShotState::AIMING)
+            controller.tick(time);
 
         // tick players
         for (Player& player : players) {
