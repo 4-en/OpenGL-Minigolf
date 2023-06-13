@@ -28,6 +28,7 @@ namespace golf
             this->frictionCoefficient = 0.03;
             this->faceCollisionOnly = true;
             this->bounceFactor = 0.8;
+            this->color = Vec3(0.5, 0.7, 0.1);
         }
     };
 
@@ -85,7 +86,7 @@ namespace golf
         double getHoleRadius() { return holeRadius; }
         const Vec3 &getStartPosition() { return startPosition; }
         bool collide(Sphere &sphere);
-        void tick(unsigned long long time);
+        virtual void tick(unsigned long long time);
         void checkHole();
         void drawHole();
         std::vector<Triangle*> createFloor(int minXY, int maxXY, double resolution, std::function<double(double, double)> heightFunction);
@@ -109,6 +110,15 @@ namespace golf
     {
     public:
         Course3(Game &game);
+    };
+
+    class Course4 : public Course
+    {
+    private:
+        SimObject* obstacle;
+    public:
+        Course4(Game &game);
+        void tick(unsigned long long time);
     };
 
     // a controller for storing, changing and displaying golf shots

@@ -223,7 +223,6 @@ void SimObject::applyCollisionVelocity(const Vec3& newVelocity, const Vec3& othe
     // check if collision is a bounce or roll
     double dot = newVelocity.normalized().dot(otherNormal);
     if (true || newVelocity.lengthSquared()<0.1) {
-        std::cout << "Rolling" << std::endl;
         // roll
         // Ff = mu * N
         // force is opposite to velocity
@@ -234,7 +233,6 @@ void SimObject::applyCollisionVelocity(const Vec3& newVelocity, const Vec3& othe
         
         double fVel = acc * dt;
         if (fVel > newVelocity.length()) {
-            std::cout << "Setting vel to 0" << std::endl;
             this->velocity = Vec3(0, 0, 0);
             return;
         }
@@ -247,7 +245,6 @@ void SimObject::applyCollisionVelocity(const Vec3& newVelocity, const Vec3& othe
         this->velocity = velDir * (newVelocity.length()-fVel);
     }
     else {
-        std::cout << dot << std::endl;
         // bounce
         // test: only reduce velocity in normal dir
         //this->velocity = newVelocity - (1 -  calcBounceFactor(other)) * dot * otherNormal * newVelocity.length();
@@ -383,12 +380,10 @@ void Triangle::draw()
     glPushMatrix();
     glBegin(GL_TRIANGLES);
     glTranslatef(position.x, position.y, position.z);
-    glColor3f(1.0f, 0.0f, 0.0f);
+    glColor3f(color.x, color.y, color.z);
     glNormalVec3(getNormal());
     glVertex3f(p1.x, p1.y, p1.z);
-    glColor3f(0.0f, 1.0f, 0.0f);
     glVertex3f(p2.x, p2.y, p2.z);
-    glColor3f(0.0f, 0.0f, 1.0f);
     glVertex3f(p3.x, p3.y, p3.z);
     glEnd();
     glPopMatrix();
