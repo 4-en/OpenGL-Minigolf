@@ -5,6 +5,7 @@
 #include <vector>
 #include "simulation.hpp"
 #include <string>
+#include <functional>
 
 namespace golf
 {
@@ -87,6 +88,9 @@ namespace golf
         void tick(unsigned long long time);
         void checkHole();
         void drawHole();
+        std::vector<Triangle*> createFloor(int minXY, int maxXY, double resolution, std::function<double(double, double)> heightFunction);
+        Wall* buildWallOnGround(double x1, double z1, double x2, double z2, double height, std::function<double(double, double)> heightFunction);
+        std::vector<Wall*> buildWallsOnGround(const std::vector<double>& xz, double height, std::function<double(double, double)> heightFunction);
     };
 
     class CourseA8 : public Course
@@ -99,6 +103,12 @@ namespace golf
     {
     public:
         Course2(Game &game);
+    };
+
+    class Course3 : public Course
+    {
+    public:
+        Course3(Game &game);
     };
 
     // a controller for storing, changing and displaying golf shots

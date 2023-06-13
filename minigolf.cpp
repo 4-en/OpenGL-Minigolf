@@ -1,6 +1,7 @@
 
 #include "minigolf.hpp"
 #include <iostream>
+#include <obstacles.hpp>
 
 namespace golf {
 
@@ -72,12 +73,13 @@ namespace golf {
     bool Course::collide(Sphere& sphere) {
         
         // collide with obstacles
+        bool collided = false;
         for (SimObject* child : children) {
-            if (child->collide(sphere)) {
-                return true;
+            if(child->collide(sphere)) {
+                collided = true;
             }
         }
-        return false;
+        return collided;
     }
 
     void Course::tick(unsigned long long time) {
@@ -100,6 +102,50 @@ namespace golf {
                 player.setScore(player.getScore() + player.getStrokes());
             }
         }
+    }
+
+    // creates a floor of triangles based on a function
+    std::vector<Triangle*> Course::createFloor(int minXY, int maxXY, double resolution, std::function<double(double, double)> heightFunction) {
+
+        std::vector<Triangle*> triangles;
+
+        for (double x = minXY; x < maxXY; x += resolution) {
+            for (double y = minXY; y < maxXY; y += resolution) {
+                Vec3 p1(x, heightFunction(x, y), y);
+                Vec3 p2(x + resolution, heightFunction(x + resolution, y), y);
+                Vec3 p3(x, heightFunction(x, y + resolution), y + resolution);
+                Vec3 p4(x + resolution, heightFunction(x + resolution, y + resolution), y + resolution);
+                triangles.push_back(new Triangle(p3, p1, p2));
+                triangles.push_back(new Triangle(p3, p4, p2));
+            }
+        }
+
+        return triangles;
+    }
+
+    Wall* Course::buildWallOnGround(double x1, double z1, double x2, double z2, double height, std::function<double(double, double)> heightFunction) {
+
+        double y1 = heightFunction(x1, z1);
+        double y2 = heightFunction(x2, z2);
+
+        Vec3 c1 = Vec3(x1, y1-height/2, z1);
+        Vec3 c2 = Vec3(x1, y1+height, z1);
+        Vec3 c3 = Vec3(x2, y2+height, z2);
+        Vec3 c4 = Vec3(x2, y2-height/2, z2);
+
+        Wall* wall = new Wall(c1, c2, c3, c4);
+        return wall;
+    }
+
+    std::vector<Wall*> Course::buildWallsOnGround(const std::vector<double>& xz, double height, std::function<double(double, double)> heightFunction) {
+
+        std::vector<Wall*> walls;
+
+        for (size_t i = 0; i < xz.size(); i += 2) {
+            walls.push_back(buildWallOnGround(xz[i], xz[i+1], xz[(i+2)%xz.size()], xz[(i+3)%xz.size()], height, heightFunction));
+        }
+
+        return walls;
     }
 
     CourseA8::CourseA8(Game& game) : Course(game, Vec3(4, 0, 8), Vec3(0, 1, 0)) {
@@ -129,6 +175,9 @@ namespace golf {
         addChild(new GroundTile(p7, p4, p6));
         addChild(new GroundTile(p1, p8, p3));
 
+        // add obstacles
+        addChild(new Pillar(Vec3(5, 0, 7), 0.5, 4));
+
 
     }
 
@@ -137,7 +186,7 @@ namespace golf {
         holeRadius = 0.4;
 
         // par
-        par = 2;
+        par = 3;
 
         // add walls
         Box b({-2,0, -2, 3, 4, 3, 4, -3, -5, -3, -5, 0});
@@ -159,6 +208,31 @@ namespace golf {
         addChild(new GroundTile(p3, p4, p1));
         addChild(new GroundTile(p5, p3, p7));
         addChild(new GroundTile(p7, p6, p5));
+
+        // add obstacles
+        addChild(new Pillar(Vec3(4, 0, 3), 0.5, 4));
+        // add obstacles
+        addChild(new Pillar(Vec3(4, 0, -3), 0.5, 4));
+
+        
+    }
+
+    Course3::Course3(Game& game) : Course(game, Vec3(2.5, 0, -2), Vec3(-4, 0.5, -1.5)) {
+        // set hole radius
+        holeRadius = 0.4;
+
+        // par
+        par = 4;
+
+        // add walls
+        auto heightFunction = [](double x, double y) {
+            return sin(x/3) + cos(y/2);
+        };
+
+        std::vector<Triangle*> triangles = createFloor(-5, 5, 0.5, heightFunction);
+        for (Triangle* triangle : triangles) {
+            addChild(triangle);
+        }
 
         
     }

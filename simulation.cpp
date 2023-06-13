@@ -329,6 +329,16 @@ void SimObject::setPosition(Vec3 position)
     }
 }
 
+bool SimObject::collide(Sphere& sphere) {
+    // check collision with children
+    bool collided = false;
+    for (SimObject *child : children)
+    {
+        if(child->collide(sphere)) collided = true;
+    }
+    return collided;
+}
+
 void SimObject::setWorldPosition(Vec3 position)
 {
     this->worldPosition = position;

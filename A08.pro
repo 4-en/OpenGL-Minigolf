@@ -21,11 +21,13 @@ LIBS    += -lOpengl32           # Wichtig zum Debuggen
 SOURCES += main.cpp\
            mainwindow.cpp \
            minigolf.cpp \
+           obstacles.cpp \
            oglwidget.cpp \
            simulation.cpp
 
 HEADERS += mainwindow.h \
            minigolf.hpp \
+           obstacles.hpp \
            oglwidget.h \
            simulation.hpp
 

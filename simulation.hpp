@@ -116,7 +116,7 @@ public:
     double calcBounceFactor(const SimObject& other);
     void addChild(SimObject* child);
     std::vector<SimObject*>& getChildren() { return children; }
-    virtual bool collide(Sphere& sphere) { return false; }
+    virtual bool collide(Sphere& sphere);
     void applyCollisionVelocity(const Vec3& newVelocity, const Vec3& otherNormal, const SimObject& otherObject);
 
     virtual void tick(unsigned long long time);
