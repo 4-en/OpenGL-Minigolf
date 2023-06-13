@@ -235,38 +235,7 @@ void OGLWidget::paintGL()
 
 
 
-    //draw arrow
-    //    glBegin(GL_QUADS);
-    //    glVertex2d(startx,starty);
-    //    glVertex2d(startx +100,starty);
-    //    glVertex2d(startx+100,starty+100);
-    //    glVertex2d(startx,starty+100);
-    //    glEnd();
 
-    float swidth = 724;
-    float sheight = 537;
-    float xval = startx/swidth*2;
-    float yval = (2 - (starty/sheight*2));
-
-//std::cout << "xval: "<<startx << std::endl;
-  //  std::cout << "yval: "<<starty << std::endl;
-//std::cout << startx<<" / " << swidth <<  " = "<<startx/swidth <<std::endl;
-//std::cout << " ytransvalue " << yval <<std::endl;
-//std::cout << " newvalues " << endxval << endyval<<std::endl;
-    glPushMatrix();
-        glTranslatef(-1.0,-1.0,0);
-        glTranslatef(xval,yval,0);
-        glBegin(GL_TRIANGLE_STRIP);
-            glColor3f(1, 1, 0.0);
-            glVertex3f(0,0,0);
-            glVertex3f(0.025,0.025,0);
-            glVertex3f(0 ,0.025,0);
-            glVertex3f(0.025,0,0);
-            glVertex3f(-2*(0.0125+startx-lastMousePos.x)/swidth,2*(0.0125+starty-lastMousePos.y)/sheight,0);
-        glEnd();
-       glTranslatef(-xval,-yval,0);
-        glTranslatef(1.025,1.1025,0);
-    glPopMatrix();
 }
 
 bool OGLWidget::showAxis = false;
@@ -291,6 +260,15 @@ void OGLWidget::mousePressEvent(QMouseEvent *event)
     startx = event->x();
     starty = event->y();
     std::cout << "first X: " <<startx << ", first Y: " << starty << std::endl;
+    game.getController().setStartpx(startx/200);
+    game.getController().setStartpy(starty/200);
+    game.getController().setArrowPoint(game.getCourse().getStartPosition());
+    //game.getController().draw();
+
+
+
+
+
 }
 
 void OGLWidget::mouseMoveEvent(QMouseEvent *event)
@@ -306,12 +284,21 @@ void OGLWidget::mouseMoveEvent(QMouseEvent *event)
     lastMousePos.x = event->x();
     lastMousePos.y = event->y();
     std::cout << "X: " <<lastMousePos.x << ", Y: " << lastMousePos.y << std::endl;
-    int distx=abs(startx-lastMousePos.x);
-    int disty=abs(starty-lastMousePos.y);
+    int distx=startx-lastMousePos.x;
+    int disty=starty-lastMousePos.y;
     distance=sqrt(distx*distx+disty+disty);
-    std::cout << "Distance: " <<distance << std::endl;
-    std::cout << "xtrans: " <<distx << "ytrans: "<< disty<< std::endl;
+    //std::cout << "Distance: " <<distance << std::endl;
+    //std::cout << "xtrans: " <<distx << "ytrans: "<< disty<< std::endl;
 
+    game.getController().setStartxval(distx/20);
+    game.getController().setStartyval(disty/20);
+
+    Vec3 ap=game.getController().getarrowpoint();
+    float d1 = abs((ap.x+0.125)-(ap.x+abs(distx/20)));
+    float d2 = abs(ap.z-(ap.z+abs(disty/20)));
+    float adistance =sqrt(d1*d1+d2*d2);
+    std::cout << "ArrowDistance " <<distance<< disty<< std::endl;
+ ;
 
 }
 

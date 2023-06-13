@@ -23,6 +23,31 @@ namespace golf {
 
     }
 
+    void Controller::draw(){
+
+        glBegin(GL_TRIANGLE_STRIP);
+        glColor3f(1, 0, 1);
+              glVertex3f(arrowpoint.x+startxval,0.5,arrowpoint.z+startyval);
+              glVertex3f(arrowpoint.x+0,0.5,arrowpoint.z+0);
+              glVertex3f(arrowpoint.x+0.25,0.5,arrowpoint.z+0);
+             // glVertex3f(arrowpoint.x+0.125,0.5,arrowpoint.z+0.25);
+
+
+
+
+
+//        glVertex3f(0+startpx,0.5,0+startpy);
+//        glVertex3f(1+startpx,0.5,0+startpy);
+//        glVertex3f(1+startpx,0.5,1+startpy);
+//        glVertex3f(0+startpx,0.5,1+startpy);
+
+
+        glEnd();
+    }
+
+    void Controller::convertinto3d(int xc,int yc){
+    }
+
     void Player::startHole() {
         startedHole = true;
         ball.setVelocity(Vec3(2,0,2));
