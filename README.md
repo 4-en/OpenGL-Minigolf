@@ -1,4 +1,1 @@
-# Computergraphic
-Computergraphic Aufgaben
-
-Aufgaben mit Qt und OpenGL
+# Small Minigolf game with Qt und OpenGL
